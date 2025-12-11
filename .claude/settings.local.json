@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(del libsupabase.ts)",
+      "Bash(del SUPABASE_SETUP.md)",
+      "Bash(where:*)",
+      "Bash(timeout 10 bash:*)",
+      "Bash(dir:*)",
+      "Bash(node -e:*)",
+      "Bash(cat:*)",
+      "Bash(npm run dev:*)",
+      "Bash(taskkill:*)",
+      "Bash(npx kill-port:*)",
+      "Bash(curl:*)",
+      "Bash(find:*)",
+      "Bash(npm run migrate:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}
