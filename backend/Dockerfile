@@ -13,7 +13,7 @@ RUN npm ci --only=production
 # Copiar código fonte
 COPY . .
 
-# Expor porta 300
+# Expor porta 3001
 EXPOSE 3001
 
 # Variáveis de ambiente (serão sobrescritas pelo Easypanel)
