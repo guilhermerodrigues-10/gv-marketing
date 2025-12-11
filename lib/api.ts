@@ -1,6 +1,8 @@
 import axios from 'axios';
 
 // Get API URL from environment or default to localhost
+// Para Vercel: usar '/api' (serverless functions na mesma origem)
+// Para desenvolvimento: usar 'http://localhost:3001/api'
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 // Create axios instance
@@ -39,19 +41,19 @@ api.interceptors.response.use(
 export const authAPI = {
   // Login simples com credenciais do .env (SEMPRE funciona!)
   login: async (email: string, password: string) => {
-    const response = await api.post('/simple-auth/login', { email, password });
+    const response = await api.post('/auth/login', { email, password });
     return response.data; // { success, token, user }
   },
 
   // Verificar se token é válido
   verify: async () => {
-    const response = await api.get('/simple-auth/verify');
+    const response = await api.get('/auth/verify');
     return response.data; // { valid, user }
   },
 
   // Renovar token
   refresh: async () => {
-    const response = await api.post('/simple-auth/refresh');
+    const response = await api.post('/auth/refresh');
     return response.data; // { success, token }
   },
 
