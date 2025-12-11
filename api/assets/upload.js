@@ -1,5 +1,5 @@
 // Vercel Serverless Function: Upload Asset to Dropbox
-const { Dropbox } = require('dropbox');
+import { Dropbox } from 'dropbox';
 
 // Converter URL do Dropbox para URL de download direto
 function convertToDirectUrl(dropboxUrl) {
@@ -12,7 +12,7 @@ function convertToDirectUrl(dropboxUrl) {
   return dropboxUrl;
 }
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   // CORS
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
