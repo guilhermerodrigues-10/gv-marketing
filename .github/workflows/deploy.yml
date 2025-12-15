@@ -48,5 +48,6 @@ jobs:
           cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/gv-marketing-frontend:buildcache,mode=max
 
       - name: Trigger Portainer Webhook
+        if: ${{ secrets.PORTAINER_WEBHOOK_URL != '' }}
         run: |
           curl -X POST ${{ secrets.PORTAINER_WEBHOOK_URL }}
