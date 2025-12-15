@@ -17,16 +17,16 @@ services:
       - NODE_ENV=production
       - PORT=3001
       # Supabase PostgreSQL
-      - DB_HOST=${DB_HOST}
-      - DB_PORT=${DB_PORT:-5432}
-      - DB_NAME=${DB_NAME:-postgres}
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - JWT_SECRET=${JWT_SECRET}
-      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-7d}
-      - FRONTEND_URL=${FRONTEND_URL}
-      - ADMIN_EMAIL=${ADMIN_EMAIL}
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - DB_HOST=db.hywyqckkahlxevvtzkfw.supabase.co
+      - DB_PORT=5432
+      - DB_NAME=postgres
+      - DB_USER=postgres
+      - DB_PASSWORD=2my8fVBNVpcMD1Mt
+      - JWT_SECRET=9b1af44452364c0ef77cf19d7b0fb495868320c2f7f31bf98ed8a00c5a9dc08b6aef35e6db6ef407daed9025c4b948128dbe685f48d91679c6885ccdb5639bda
+      - JWT_EXPIRES_IN=7d
+      - FRONTEND_URL=http://72.61.135.194
+      - ADMIN_EMAIL=admin@gvmarketing.com
+      - ADMIN_PASSWORD=GVMarketing2024!@Secure
       - DROPBOX_ACCESS_TOKEN=${DROPBOX_ACCESS_TOKEN}
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
