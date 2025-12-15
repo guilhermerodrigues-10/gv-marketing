@@ -15,6 +15,7 @@ out/
 .env.development
 .env.production
 .env.test
+.env.portainer
 backend/.env
 backend/.env.local
 backend/.env.production
