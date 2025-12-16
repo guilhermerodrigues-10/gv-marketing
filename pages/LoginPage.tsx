@@ -6,18 +6,25 @@ import { Input } from '../components/ui/Input';
 
 export const LoginPage: React.FC = () => {
   const { login } = useApp();
-  const [email, setEmail] = useState('alex@taskflow.com');
-  const [password, setPassword] = useState('password');
+  const [email, setEmail] = useState('admin@gvmarketing.com');
+  const [password, setPassword] = useState('GVMarketing2024!@Secure');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      login(email);
+    setError('');
+
+    try {
+      await login(email, password);
+      // Redirect is automatic when user is set
+    } catch (err: any) {
+      const message = err.response?.data?.error || 'Credenciais inválidas. Tente novamente.';
+      setError(message);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -39,7 +46,13 @@ export const LoginPage: React.FC = () => {
 
         <div className="p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
-            <Input 
+            {error && (
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+                <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+              </div>
+            )}
+
+            <Input
               label="Endereço de Email" 
               type="email" 
               value={email} 

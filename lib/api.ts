@@ -13,7 +13,7 @@ const api = axios.create({
 
 // Add auth token to requests
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('authToken');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -26,7 +26,7 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       // Token expired or invalid
-      localStorage.removeItem('token');
+      localStorage.removeItem('authToken');
       localStorage.removeItem('user');
       window.location.href = '/#/login';
     }
@@ -38,8 +38,8 @@ api.interceptors.response.use(
 
 export const authAPI = {
   // Login simples com credenciais do .env (SEMPRE funciona!)
-  login: async (email: string, password: string) => {
-    const response = await api.post('/simple-auth/login', { email, password });
+  login: async (credentials: { email: string; password: string }) => {
+    const response = await api.post('/simple-auth/login', credentials);
     return response.data; // { success, token, user }
   },
 
