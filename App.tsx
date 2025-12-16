@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AppProvider, useApp } from './contexts/AppContext';
 import { Header } from './components/layout/Header';
@@ -14,6 +14,7 @@ import { CalendarPage } from './pages/CalendarPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { AssetsPage } from './pages/AssetsPage';
+import { testSupabaseConnection } from './lib/test-supabase';
 
 const ProtectedLayout = () => {
   const { user, sidebarOpen } = useApp();
@@ -63,6 +64,11 @@ const AppRoutes = () => {
 }
 
 const App: React.FC = () => {
+  useEffect(() => {
+    // Teste de conexão com Supabase ao carregar o app
+    testSupabaseConnection();
+  }, []);
+
   return (
     <AppProvider>
       <HashRouter>
