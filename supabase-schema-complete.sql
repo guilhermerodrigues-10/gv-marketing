@@ -281,12 +281,12 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Inserir usuários de exemplo (SE NÃO EXISTIREM)
 -- IMPORTANTE: O email 'admin@gvmarketing.com' é o login padrão do sistema
-INSERT INTO users (id, name, email, role, avatar_url) VALUES
-  ('550e8400-e29b-41d4-a716-446655440001', 'Admin GV Marketing', 'admin@gvmarketing.com', 'Admin', 'https://ui-avatars.com/api/?name=Admin+GV&background=7c3aed&color=fff'),
-  ('550e8400-e29b-41d4-a716-446655440002', 'João Silva', 'joao.silva@gvmarketing.com', 'Admin', 'https://ui-avatars.com/api/?name=Joao+Silva&background=7c3aed&color=fff'),
-  ('550e8400-e29b-41d4-a716-446655440003', 'Maria Santos', 'maria.santos@gvmarketing.com', 'Gerente', 'https://ui-avatars.com/api/?name=Maria+Santos&background=3b82f6&color=fff'),
-  ('550e8400-e29b-41d4-a716-446655440004', 'Pedro Costa', 'pedro.costa@gvmarketing.com', 'Membro', 'https://ui-avatars.com/api/?name=Pedro+Costa&background=10b981&color=fff'),
-  ('550e8400-e29b-41d4-a716-446655440005', 'Ana Paula', 'ana.paula@gvmarketing.com', 'Membro', 'https://ui-avatars.com/api/?name=Ana+Paula&background=10b981&color=fff')
+INSERT INTO users (name, email, role, avatar_url) VALUES
+  ('Admin GV Marketing', 'admin@gvmarketing.com', 'Admin', 'https://ui-avatars.com/api/?name=Admin+GV&background=7c3aed&color=fff'),
+  ('João Silva', 'joao.silva@gvmarketing.com', 'Admin', 'https://ui-avatars.com/api/?name=Joao+Silva&background=7c3aed&color=fff'),
+  ('Maria Santos', 'maria.santos@gvmarketing.com', 'Gerente', 'https://ui-avatars.com/api/?name=Maria+Santos&background=3b82f6&color=fff'),
+  ('Pedro Costa', 'pedro.costa@gvmarketing.com', 'Membro', 'https://ui-avatars.com/api/?name=Pedro+Costa&background=10b981&color=fff'),
+  ('Ana Paula', 'ana.paula@gvmarketing.com', 'Membro', 'https://ui-avatars.com/api/?name=Ana+Paula&background=10b981&color=fff')
 ON CONFLICT (email) DO UPDATE SET
   name = EXCLUDED.name,
   role = EXCLUDED.role,
