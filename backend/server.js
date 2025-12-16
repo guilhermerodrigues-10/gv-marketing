@@ -74,23 +74,24 @@ const startServer = async () => {
     // Test database connection (optional - não falha se não tiver PostgreSQL)
     try {
       console.log('🔄 Tentando conectar ao banco de dados...');
-      await pool.query('SELECT NOW()');
-      console.log('✅ Database connected successfully');
+      console.log('📍 Connection timeout: 10s');
+      const result = await pool.query('SELECT NOW()');
+      console.log('✅ Database connected successfully at:', result.rows[0].now);
     } catch (dbError) {
       console.log('❌ Database connection error:');
       console.log('   Error name:', dbError.name);
       console.log('   Error message:', dbError.message);
       console.log('   Error code:', dbError.code);
-      console.log('⚠️ Database not available (PostgreSQL not installed or not configured)');
-      console.log('ℹ️  Assets upload via Dropbox will still work!');
-      console.log('ℹ️  To use full backend features, install PostgreSQL and configure backend/.env');
+      console.log('⚠️ Server will start anyway (database connection is optional)');
+      console.log('ℹ️  Some features may not work without database');
     }
 
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running on http://localhost:${PORT}`);
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`🚀 Server running on http://0.0.0.0:${PORT}`);
       console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`🔗 API: http://localhost:${PORT}/api`);
-      console.log(`📁 Assets API: http://localhost:${PORT}/api/assets`);
+      console.log(`🔗 API: http://0.0.0.0:${PORT}/api`);
+      console.log(`📁 Assets API: http://0.0.0.0:${PORT}/api/assets`);
+      console.log(`✅ Server is healthy and ready to accept connections`);
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error);
@@ -100,14 +101,29 @@ const startServer = async () => {
 
 // Handle graceful shutdown
 process.on('SIGTERM', async () => {
-  console.log('SIGTERM received. Closing server...');
-  await pool.end();
+  console.log('⚠️ SIGTERM received. Shutting down gracefully...');
+  console.log('📍 Timestamp:', new Date().toISOString());
+  console.log('🔍 This may be caused by:');
+  console.log('   - Docker/Portainer restarting the container');
+  console.log('   - Watchtower updating to a new image');
+  console.log('   - Healthcheck failure');
+  try {
+    await pool.end();
+    console.log('✅ Database connections closed');
+  } catch (error) {
+    console.error('❌ Error closing database:', error);
+  }
   process.exit(0);
 });
 
 process.on('SIGINT', async () => {
-  console.log('SIGINT received. Closing server...');
-  await pool.end();
+  console.log('⚠️ SIGINT received (Ctrl+C). Shutting down gracefully...');
+  try {
+    await pool.end();
+    console.log('✅ Database connections closed');
+  } catch (error) {
+    console.error('❌ Error closing database:', error);
+  }
   process.exit(0);
 });
 
