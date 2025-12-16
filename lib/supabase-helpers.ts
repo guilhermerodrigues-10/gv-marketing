@@ -216,22 +216,28 @@ export const taskAPI = {
   },
 
   async create(task: Omit<Task, 'id' | 'createdAt' | 'timeTracked' | 'isTracking' | 'attachments'>) {
+    console.log('📝 Creating task:', task);
+
     // Create task
     const { data: taskData, error: taskError } = await supabase
       .from('tasks')
       .insert({
         title: task.title,
-        description: task.description,
+        description: task.description || '',
         status: task.status,
         priority: task.priority,
-        due_date: task.dueDate,
+        due_date: task.dueDate || null,
         project_id: task.projectId,
-        tags: task.tags,
+        tags: task.tags || [],
       })
       .select()
       .single();
 
-    if (taskError) throw taskError;
+    if (taskError) {
+      console.error('❌ Task creation error:', taskError);
+      throw taskError;
+    }
+    console.log('✅ Task created:', taskData);
 
     // Add assignees
     if (task.assignees.length > 0) {

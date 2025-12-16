@@ -57,7 +57,7 @@ export const TeamPage: React.FC = () => {
     }
   };
 
-  const canEdit = currentUser?.role === 'Admin' || currentUser?.role === 'Gerente';
+  const canEdit = currentUser?.role === 'Admin'; // Apenas Admin pode gerenciar equipe
 
   return (
     <div className="max-w-5xl mx-auto">
