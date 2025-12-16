@@ -6,8 +6,8 @@ import { Input } from '../components/ui/Input';
 
 export const LoginPage: React.FC = () => {
   const { login } = useApp();
-  const [email, setEmail] = useState('admin@gvmarketing.com');
-  const [password, setPassword] = useState('GVMarketing2024!@Secure');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
