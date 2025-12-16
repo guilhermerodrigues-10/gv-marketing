@@ -1,6 +1,8 @@
-# Deploy Automático no Portainer com GitHub Actions
+# Deploy Automático no Portainer com GitHub Actions + Supabase
 
-Este guia mostra como configurar o deploy automático da aplicação GV Marketing no Portainer usando GitHub Actions.
+Este guia mostra como configurar o deploy automático da aplicação GV Marketing no Portainer usando GitHub Actions com integração ao banco de dados Supabase.
+
+> 📖 **Novo!** Para um guia focado apenas no Supabase e Portainer, veja [DEPLOY_PORTAINER_SUPABASE.md](DEPLOY_PORTAINER_SUPABASE.md)
 
 ## Arquitetura
 
@@ -21,11 +23,21 @@ GitHub (push) → GitHub Actions → Docker Hub → Portainer → VPS
 
 ## Pré-requisitos
 
-### 1. Conta Docker Hub
+### 1. Banco de Dados Supabase Configurado
+
+**IMPORTANTE**: Configure o banco de dados antes de fazer o deploy!
+
+1. Execute o SQL do arquivo `supabase-schema.sql` no Supabase SQL Editor
+2. (Opcional) Execute `lib/migrate-to-supabase.sql` para dados iniciais
+3. Verifique se as tabelas foram criadas corretamente
+
+📖 Veja o guia completo: [SUPABASE_SETUP.md](SUPABASE_SETUP.md)
+
+### 2. Conta Docker Hub
 
 Crie uma conta gratuita em [hub.docker.com](https://hub.docker.com)
 
-### 2. Portainer Instalado na VPS
+### 3. Portainer Instalado na VPS
 
 Se ainda não tiver:
 
@@ -84,25 +96,33 @@ Copie o conteúdo de `portainer-stack.yml` para o editor
 
 ### 3. Configurar Variáveis de Ambiente no Portainer
 
-Na aba **Environment variables** da stack, adicione (use `.env.portainer.example` como referência):
+Na aba **Environment variables** da stack, adicione (use `.env.portainer` como referência):
 
-```
-DOCKER_USERNAME=seu-usuario-docker
-BACKEND_PORT=3001
-FRONTEND_PORT=80
-DB_HOST=seu-projeto.supabase.co
-DB_PORT=5432
+```env
+DOCKER_USERNAME=guilhermerodrigues10
+VITE_API_URL=http://72.61.135.194:3001
+
+# Supabase Frontend
+VITE_SUPABASE_URL=https://ncbmjkhoplgyfgxeqhmo.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5jYm1qa2hvcGxneWZneGVxaG1vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU0NzMwMzgsImV4cCI6MjA4MTA0OTAzOH0.t6_KI2oF6u7jmFwu8R_Av16vcBe5qgUTYgr9p1u4Ux4
+
+# Supabase Backend
+SUPABASE_URL=https://ncbmjkhoplgyfgxeqhmo.supabase.co
+SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5jYm1qa2hvcGxneWZneGVxaG1vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU0NzMwMzgsImV4cCI6MjA4MTA0OTAzOH0.t6_KI2oF6u7jmFwu8R_Av16vcBe5qgUTYgr9p1u4Ux4
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5jYm1qa2hvcGxneWZneGVxaG1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NTQ3MzAzOCwiZXhwIjoyMDgxMDQ5MDM4fQ.M7ncPSY5LeJU2JOyKdPZoCUrDXrXUwQ5GSJQMjhY-C4
+
+# Database
+DB_HOST=aws-0-us-east-1.pooler.supabase.com
+DB_PORT=6543
 DB_NAME=postgres
-DB_USER=postgres
-DB_PASSWORD=sua-senha-supabase
-JWT_SECRET=sua-chave-secreta-jwt
-JWT_EXPIRES_IN=7d
-FRONTEND_URL=http://seu-dominio.com
-VITE_API_URL=http://seu-dominio.com:3001
-ADMIN_EMAIL=admin@gvmarketing.com
-ADMIN_PASSWORD=senha-admin-segura
-DROPBOX_ACCESS_TOKEN=seu-token-dropbox
+DB_USER=postgres.ncbmjkhoplgyfgxeqhmo
+DB_PASSWORD=7plWYb2gPnYWUban
+
+# Dropbox (opcional)
+DROPBOX_ACCESS_TOKEN=
 ```
+
+> 💡 **Dica**: Copie direto do arquivo `.env.portainer` para não errar as credenciais!
 
 ### 4. Deploy da Stack
 

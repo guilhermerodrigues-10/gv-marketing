@@ -16,12 +16,16 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3001
+      # Supabase Configuration
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
       # Supabase PostgreSQL (Connection Pooler)
-      - DB_HOST=aws-0-us-west-2.pooler.supabase.com
-      - DB_PORT=6543
-      - DB_NAME=postgres
-      - DB_USER=postgres.hywyqckkahlxevvtzkfw
-      - DB_PASSWORD=2my8fVBNVpcMD1Mt
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
       - JWT_SECRET=9b1af44452364c0ef77cf19d7b0fb495868320c2f7f31bf98ed8a00c5a9dc08b6aef35e6db6ef407daed9025c4b948128dbe685f48d91679c6885ccdb5639bda
       - JWT_EXPIRES_IN=7d
       - FRONTEND_URL=http://72.61.135.194:8080
@@ -51,6 +55,8 @@ services:
         condition: any
     environment:
       - VITE_API_URL=${VITE_API_URL}
+      - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
+      - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
     depends_on:
       - backend
     healthcheck:

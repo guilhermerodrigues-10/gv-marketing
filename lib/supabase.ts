@@ -19,8 +19,8 @@ const getEnv = (key: string) => {
 
 // Credenciais padrão do Supabase
 // O sistema usará estas chaves caso não encontre variáveis de ambiente
-const DEFAULT_URL = 'https://ncbmjkhoplgyfgxeqhmo.supabase.co';
-const DEFAULT_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5jYm1qa2hvcGxneWZneGVxaG1vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU0NzMwMzgsImV4cCI6MjA4MTA0OTAzOH0.t6_KI2oF6u7jmFwu8R_Av16vcBe5qgUTYgr9p1u4Ux4';
+const DEFAULT_URL = 'https://hywyqckkahlxevvtzkfw.supabase.co';
+const DEFAULT_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh5d3lxY2trYWhseGV2dnR6a2Z3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU0MDAyMTUsImV4cCI6MjA4MDk3NjIxNX0.Gc8rHZfSIWVNiyUP43eRqCLD6i80CPS7YiiZct0rmHg';
 
 const supabaseUrl = getEnv('VITE_SUPABASE_URL') || DEFAULT_URL;
 const supabaseAnonKey = getEnv('VITE_SUPABASE_ANON_KEY') || DEFAULT_KEY;
