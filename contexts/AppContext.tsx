@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Task, User, Project, Column, Notification } from '../types';
 import { INITIAL_TASKS, MOCK_USERS, MOCK_PROJECTS, BOARD_COLUMNS } from '../constants';
+import { authAPI } from '../lib/api';
 
 interface AppState {
   user: User | null;
@@ -15,7 +16,7 @@ interface AppState {
 }
 
 interface AppContextType extends AppState {
-  login: (email: string) => void;
+  login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   toggleTheme: () => void;
   toggleSidebar: () => void;
@@ -73,6 +74,28 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   }, []);
 
+  // Recover session on load
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    const savedUser = localStorage.getItem('user');
+
+    if (token && savedUser) {
+      try {
+        const user = JSON.parse(savedUser);
+        setUser(user);
+
+        // Verify if token is still valid
+        authAPI.verify().catch(() => {
+          // Token expired or invalid
+          localStorage.clear();
+          setUser(null);
+        });
+      } catch {
+        localStorage.clear();
+      }
+    }
+  }, []);
+
   // Apply theme class
   useEffect(() => {
     if (isDarkMode) {
@@ -92,12 +115,27 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return () => clearInterval(interval);
   }, []);
 
-  const login = (email: string) => {
-    const foundUser = users.find(u => u.email === email) || users[0];
-    setUser(foundUser);
+  const login = async (email: string, password: string) => {
+    try {
+      const response = await authAPI.login({ email, password });
+
+      // Salvar token e usuário no localStorage
+      localStorage.setItem('authToken', response.token);
+      localStorage.setItem('user', JSON.stringify(response.user));
+
+      // Atualizar state
+      setUser(response.user);
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error; // Para que LoginPage possa capturar
+    }
   };
 
-  const logout = () => setUser(null);
+  const logout = () => {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('user');
+    setUser(null);
+  };
   const toggleTheme = () => setIsDarkMode(!isDarkMode);
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
