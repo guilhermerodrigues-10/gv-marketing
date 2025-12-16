@@ -23,6 +23,8 @@ const pool = new Pool({
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
+  // Force IPv4 (VPS may not support IPv6)
+  family: 4,
   // SSL necessário para Supabase (pooler e direct connection)
   ssl: (process.env.DB_HOST?.includes('supabase.com') || process.env.DB_HOST?.includes('supabase.co'))
     ? { rejectUnauthorized: false }
