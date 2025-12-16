@@ -27,6 +27,8 @@ ENV DB_PASSWORD=2my8fVBNVpcMD1Mt
 ENV JWT_SECRET=9b1af44452364c0ef77cf19d7b0fb495868320c2f7f31bf98ed8a00c5a9dc08b6aef35e6db6ef407daed9025c4b948128dbe685f48d91679c6885ccdb5639bda
 ENV JWT_EXPIRES_IN=7d
 ENV FRONTEND_URL=http://72.61.135.194
+ENV ADMIN_EMAIL=admin@gvmarketing.com
+ENV ADMIN_PASSWORD=GVMarketing2024!@Secure
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
