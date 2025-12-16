@@ -13,6 +13,10 @@ RUN npm ci
 # Copiar código fonte
 COPY . .
 
+# Set API URL for production
+ARG VITE_API_URL=http://72.61.135.194:3001
+ENV VITE_API_URL=${VITE_API_URL}
+
 # Build da aplicação
 RUN npm run build
 
