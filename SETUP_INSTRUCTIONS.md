@@ -99,6 +99,8 @@ Aguarde 2-3 minutos → Acesse http://72.61.135.194:8080
 ### Não vejo botões de editar equipe?
 - ❌ **Você NÃO está logado como Admin**
 - ✅ Faça login com `admin@gvmarketing.com`
+- ✅ **Se ainda não aparecer:** Deslogue e logue novamente após o deploy mais recente
+- ✅ O problema foi corrigido - o role agora é 'Admin' (maiúsculo) como esperado
 
 ### Database não conecta?
 - ✅ **Já foi corrigido!** Timeout aumentado para 10s
