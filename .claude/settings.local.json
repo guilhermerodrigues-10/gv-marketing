@@ -24,7 +24,8 @@
       "Bash(timeout 5 bash -c 'cat > /dev/tcp/72.61.135.194/8080')",
       "Bash(git rm:*)",
       "Bash(grep:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(deploy.bat)"
     ]
   }
 }
