@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { Task, User, Project, Column, Notification } from '../types';
 import { INITIAL_TASKS, MOCK_USERS, MOCK_PROJECTS, BOARD_COLUMNS } from '../constants';
 import { authAPI } from '../lib/api';
+import { taskAPI, projectAPI, userAPI, columnAPI } from '../lib/supabase-helpers';
 
 interface AppState {
   user: User | null;
@@ -105,6 +106,43 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   }, [isDarkMode]);
 
+  // Load initial data from Supabase
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        console.log('📥 Carregando dados do Supabase...');
+
+        // Carregar tarefas
+        const tasksData = await taskAPI.getAll();
+        if (tasksData.length > 0) {
+          setTasks(tasksData);
+          console.log(`✅ ${tasksData.length} tarefa(s) carregada(s)`);
+        }
+
+        // Carregar projetos
+        const projectsData = await projectAPI.getAll();
+        if (projectsData.length > 0) {
+          setProjects(projectsData);
+          console.log(`✅ ${projectsData.length} projeto(s) carregado(s)`);
+        }
+
+        // Carregar colunas
+        const columnsData = await columnAPI.getAll();
+        if (columnsData.length > 0) {
+          setColumns(columnsData);
+          console.log(`✅ ${columnsData.length} coluna(s) carregada(s)`);
+        }
+
+        console.log('✅ Dados carregados do Supabase');
+      } catch (error) {
+        console.error('❌ Erro ao carregar dados do Supabase:', error);
+        console.log('⚠️ Usando dados mock locais');
+      }
+    };
+
+    loadData();
+  }, []);
+
   // Simulate time tracking interval
   useEffect(() => {
     const interval = setInterval(() => {
@@ -139,91 +177,196 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const toggleTheme = () => setIsDarkMode(!isDarkMode);
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
-  // --- Task Logic ---
-  const addTask = (newTaskData: Omit<Task, 'id' | 'createdAt' | 'timeTracked' | 'isTracking' | 'attachments'>) => {
-    const newTask: Task = {
-      ...newTaskData,
-      id: `t${Date.now()}`,
-      createdAt: new Date().toISOString(),
-      timeTracked: 0,
-      isTracking: false,
-      attachments: []
-    };
-    setTasks([...tasks, newTask]);
-    addNotification({ title: 'Nova Tarefa', message: `Tarefa "${newTask.title}" criada.`, type: 'info' });
+  // --- Task Logic com Supabase ---
+  const addTask = async (newTaskData: Omit<Task, 'id' | 'createdAt' | 'timeTracked' | 'isTracking' | 'attachments'>) => {
+    try {
+      // Criar no Supabase
+      await taskAPI.create(newTaskData);
+
+      // Recarregar lista
+      const updatedTasks = await taskAPI.getAll();
+      setTasks(updatedTasks);
+
+      addNotification({ title: 'Nova Tarefa', message: `Tarefa "${newTaskData.title}" criada.`, type: 'info' });
+    } catch (error) {
+      console.error('Erro ao criar tarefa:', error);
+      addNotification({ title: 'Erro', message: 'Não foi possível criar a tarefa.', type: 'error' });
+    }
   };
 
-  const updateTask = (taskId: string, updates: Partial<Task>) => {
-    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, ...updates } : t));
+  const updateTask = async (taskId: string, updates: Partial<Task>) => {
+    try {
+      // Atualizar localmente primeiro (UI responsiva)
+      setTasks(prev => prev.map(t => t.id === taskId ? { ...t, ...updates } : t));
+
+      // Atualizar no Supabase
+      await taskAPI.update(taskId, updates);
+    } catch (error) {
+      console.error('Erro ao atualizar tarefa:', error);
+      // Reverter mudança local em caso de erro
+      const updatedTasks = await taskAPI.getAll();
+      setTasks(updatedTasks);
+      addNotification({ title: 'Erro', message: 'Não foi possível atualizar a tarefa.', type: 'error' });
+    }
   };
 
-  const deleteTask = (taskId: string) => {
-    setTasks(prev => prev.filter(t => t.id !== taskId));
+  const deleteTask = async (taskId: string) => {
+    try {
+      await taskAPI.delete(taskId);
+      setTasks(prev => prev.filter(t => t.id !== taskId));
+    } catch (error) {
+      console.error('Erro ao deletar tarefa:', error);
+      addNotification({ title: 'Erro', message: 'Não foi possível deletar a tarefa.', type: 'error' });
+    }
   };
 
-  const moveTask = (taskId: string, newStatus: string) => {
-    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
+  const moveTask = async (taskId: string, newStatus: string) => {
+    try {
+      // Atualizar localmente primeiro (UI responsiva)
+      setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
+
+      // Atualizar no Supabase
+      await taskAPI.update(taskId, { status: newStatus });
+    } catch (error) {
+      console.error('Erro ao mover tarefa:', error);
+      // Reverter mudança local
+      const updatedTasks = await taskAPI.getAll();
+      setTasks(updatedTasks);
+    }
   };
 
-  const toggleTimeTracking = (taskId: string) => {
-    setTasks(prev => prev.map(t => {
-      if (t.id === taskId) return { ...t, isTracking: !t.isTracking };
-      return t;
-    }));
+  const toggleTimeTracking = async (taskId: string) => {
+    try {
+      const task = tasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      // Atualizar localmente primeiro
+      setTasks(prev => prev.map(t => {
+        if (t.id === taskId) return { ...t, isTracking: !t.isTracking };
+        return t;
+      }));
+
+      // Atualizar no Supabase
+      await taskAPI.update(taskId, { isTracking: !task.isTracking });
+    } catch (error) {
+      console.error('Erro ao alternar tracking:', error);
+    }
   };
 
-  // --- Project Logic ---
-  const addProject = (projectData: Omit<Project, 'id' | 'members'>) => {
-    const newProject: Project = { 
-      ...projectData, 
-      id: `p${Date.now()}`,
-      members: [user?.id || users[0].id]
-    };
-    setProjects([...projects, newProject]);
-    addNotification({ title: 'Novo Projeto', message: `Projeto "${newProject.name}" criado.`, type: 'success' });
+  // --- Project Logic com Supabase ---
+  const addProject = async (projectData: Omit<Project, 'id' | 'members'>) => {
+    try {
+      const memberIds = [user?.id || users[0].id];
+      await projectAPI.create(projectData, memberIds);
+
+      // Recarregar projetos
+      const updatedProjects = await projectAPI.getAll();
+      setProjects(updatedProjects);
+
+      addNotification({ title: 'Novo Projeto', message: `Projeto "${projectData.name}" criado.`, type: 'success' });
+    } catch (error) {
+      console.error('Erro ao criar projeto:', error);
+      addNotification({ title: 'Erro', message: 'Não foi possível criar o projeto.', type: 'error' });
+    }
   };
 
-  const updateProject = (projectId: string, updates: Partial<Project>) => {
-    setProjects(prev => prev.map(p => p.id === projectId ? { ...p, ...updates } : p));
+  const updateProject = async (projectId: string, updates: Partial<Project>) => {
+    try {
+      // Atualizar localmente primeiro
+      setProjects(prev => prev.map(p => p.id === projectId ? { ...p, ...updates } : p));
+
+      // Atualizar no Supabase
+      await projectAPI.update(projectId, updates);
+    } catch (error) {
+      console.error('Erro ao atualizar projeto:', error);
+      // Reverter
+      const updatedProjects = await projectAPI.getAll();
+      setProjects(updatedProjects);
+    }
   };
 
-  const deleteProject = (projectId: string) => {
-    setProjects(prev => prev.filter(p => p.id !== projectId));
-    setTasks(prev => prev.filter(t => t.projectId !== projectId));
+  const deleteProject = async (projectId: string) => {
+    try {
+      await projectAPI.delete(projectId);
+      setProjects(prev => prev.filter(p => p.id !== projectId));
+      setTasks(prev => prev.filter(t => t.projectId !== projectId));
+    } catch (error) {
+      console.error('Erro ao deletar projeto:', error);
+      addNotification({ title: 'Erro', message: 'Não foi possível deletar o projeto.', type: 'error' });
+    }
   };
 
-  const toggleProjectMember = (projectId: string, userId: string) => {
-    setProjects(prev => prev.map(p => {
-      if (p.id === projectId) {
-        const isMember = p.members.includes(userId);
-        return {
-          ...p,
-          members: isMember 
-            ? p.members.filter(id => id !== userId) 
-            : [...p.members, userId]
-        };
+  const toggleProjectMember = async (projectId: string, userId: string) => {
+    try {
+      const project = projects.find(p => p.id === projectId);
+      if (!project) return;
+
+      const isMember = project.members.includes(userId);
+
+      if (isMember) {
+        await projectAPI.removeMember(projectId, userId);
+      } else {
+        await projectAPI.addMember(projectId, userId);
       }
-      return p;
-    }));
+
+      // Atualizar localmente
+      setProjects(prev => prev.map(p => {
+        if (p.id === projectId) {
+          return {
+            ...p,
+            members: isMember
+              ? p.members.filter(id => id !== userId)
+              : [...p.members, userId]
+          };
+        }
+        return p;
+      }));
+    } catch (error) {
+      console.error('Erro ao alternar membro do projeto:', error);
+    }
   };
 
-  // --- Column Logic ---
-  const addColumn = (title: string) => {
-    const newId = title.toLowerCase().replace(/\s+/g, '_');
-    const newColumn: Column = { id: newId, title };
-    setColumns([...columns, newColumn]);
+  // --- Column Logic com Supabase ---
+  const addColumn = async (title: string) => {
+    try {
+      const position = columns.length;
+      await columnAPI.create(title, position);
+
+      // Recarregar colunas
+      const updatedColumns = await columnAPI.getAll();
+      setColumns(updatedColumns);
+    } catch (error) {
+      console.error('Erro ao criar coluna:', error);
+    }
   };
 
-  const updateColumn = (columnId: string, title: string) => {
-    setColumns(prev => prev.map(c => c.id === columnId ? { ...c, title } : c));
+  const updateColumn = async (columnId: string, title: string) => {
+    try {
+      // Atualizar localmente
+      setColumns(prev => prev.map(c => c.id === columnId ? { ...c, title } : c));
+
+      // Atualizar no Supabase
+      await columnAPI.update(columnId, title);
+    } catch (error) {
+      console.error('Erro ao atualizar coluna:', error);
+      // Reverter
+      const updatedColumns = await columnAPI.getAll();
+      setColumns(updatedColumns);
+    }
   };
 
-  const deleteColumn = (columnId: string) => {
+  const deleteColumn = async (columnId: string) => {
     if (confirm('Tem certeza? Tarefas nesta coluna serão movidas para o Backlog.')) {
-      setColumns(prev => prev.filter(c => c.id !== columnId));
-      const fallbackColumn = columns[0].id === columnId ? columns[1]?.id : columns[0].id;
-      if (fallbackColumn) {
-        setTasks(prev => prev.map(t => t.status === columnId ? { ...t, status: fallbackColumn } : t));
+      try {
+        await columnAPI.delete(columnId);
+
+        setColumns(prev => prev.filter(c => c.id !== columnId));
+        const fallbackColumn = columns[0].id === columnId ? columns[1]?.id : columns[0].id;
+        if (fallbackColumn) {
+          setTasks(prev => prev.map(t => t.status === columnId ? { ...t, status: fallbackColumn } : t));
+        }
+      } catch (error) {
+        console.error('Erro ao deletar coluna:', error);
       }
     }
   };
