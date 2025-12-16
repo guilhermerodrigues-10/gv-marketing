@@ -73,9 +73,14 @@ const startServer = async () => {
   try {
     // Test database connection (optional - não falha se não tiver PostgreSQL)
     try {
+      console.log('🔄 Tentando conectar ao banco de dados...');
       await pool.query('SELECT NOW()');
       console.log('✅ Database connected successfully');
     } catch (dbError) {
+      console.log('❌ Database connection error:');
+      console.log('   Error name:', dbError.name);
+      console.log('   Error message:', dbError.message);
+      console.log('   Error code:', dbError.code);
       console.log('⚠️ Database not available (PostgreSQL not installed or not configured)');
       console.log('ℹ️  Assets upload via Dropbox will still work!');
       console.log('ℹ️  To use full backend features, install PostgreSQL and configure backend/.env');
