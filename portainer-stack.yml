@@ -16,11 +16,11 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3001
-      # Supabase PostgreSQL
-      - DB_HOST=db.hywyqckkahlxevvtzkfw.supabase.co
-      - DB_PORT=5432
+      # Supabase PostgreSQL (Connection Pooler)
+      - DB_HOST=aws-0-us-west-2.pooler.supabase.com
+      - DB_PORT=6543
       - DB_NAME=postgres
-      - DB_USER=postgres
+      - DB_USER=postgres.hywyqckkahlxevvtzkfw
       - DB_PASSWORD=2my8fVBNVpcMD1Mt
       - JWT_SECRET=9b1af44452364c0ef77cf19d7b0fb495868320c2f7f31bf98ed8a00c5a9dc08b6aef35e6db6ef407daed9025c4b948128dbe685f48d91679c6885ccdb5639bda
       - JWT_EXPIRES_IN=7d

@@ -23,8 +23,8 @@ const pool = new Pool({
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
-  // SSL necessário para Supabase e outros bancos online
-  ssl: process.env.DB_HOST?.includes('supabase.co')
+  // SSL necessário para Supabase (pooler e direct connection)
+  ssl: (process.env.DB_HOST?.includes('supabase.com') || process.env.DB_HOST?.includes('supabase.co'))
     ? { rejectUnauthorized: false }
     : false
 });

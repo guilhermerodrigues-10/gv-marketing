@@ -19,10 +19,10 @@ EXPOSE 3001
 # Variáveis de ambiente
 ENV NODE_ENV=production
 ENV PORT=3001
-ENV DB_HOST=db.hywyqckkahlxevvtzkfw.supabase.co
-ENV DB_PORT=5432
+ENV DB_HOST=aws-0-us-west-2.pooler.supabase.com
+ENV DB_PORT=6543
 ENV DB_NAME=postgres
-ENV DB_USER=postgres
+ENV DB_USER=postgres.hywyqckkahlxevvtzkfw
 ENV DB_PASSWORD=2my8fVBNVpcMD1Mt
 ENV JWT_SECRET=9b1af44452364c0ef77cf19d7b0fb495868320c2f7f31bf98ed8a00c5a9dc08b6aef35e6db6ef407daed9025c4b948128dbe685f48d91679c6885ccdb5639bda
 ENV JWT_EXPIRES_IN=7d
