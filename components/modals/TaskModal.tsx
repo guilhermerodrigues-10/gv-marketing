@@ -70,22 +70,23 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Convert Hours/Minutes back to total seconds
     const totalSeconds = (Number(timeSpent.hours) * 3600) + (Number(timeSpent.minutes) * 60);
 
     const processedData = {
       ...formData,
       timeTracked: totalSeconds,
-      dueDate: formData.dueDate ? new Date(formData.dueDate).toISOString() : ''
+      dueDate: formData.dueDate ? new Date(formData.dueDate).toISOString() : '',
+      subtasks: formData.subtasks || []
     };
 
     if (initialTask?.id) {
-      updateTask(initialTask.id, processedData);
+      await updateTask(initialTask.id, processedData);
     } else {
-      addTask(processedData as any);
+      await addTask(processedData as any);
     }
     onClose();
   };

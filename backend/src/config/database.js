@@ -22,7 +22,7 @@ const pool = new Pool({
   password: process.env.DB_PASSWORD,
   max: 20,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  connectionTimeoutMillis: 10000, // Increased to 10s for Supabase pooler
   // Force IPv4 (VPS may not support IPv6)
   family: 4,
   // SSL necessário para Supabase (pooler e direct connection)
