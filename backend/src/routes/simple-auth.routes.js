@@ -33,7 +33,7 @@ router.post('/login', async (req, res) => {
     const token = jwt.sign(
       {
         email: adminEmail,
-        role: 'admin',
+        role: 'Admin',
         userId: 'admin-001'
       },
       process.env.JWT_SECRET,
@@ -48,9 +48,10 @@ router.post('/login', async (req, res) => {
       token,
       user: {
         id: 'admin-001',
-        name: 'Administrador',
+        name: 'Admin GV Marketing',
         email: adminEmail,
-        role: 'admin'
+        role: 'Admin',
+        avatarUrl: 'https://ui-avatars.com/api/?name=Admin+GV&background=7c3aed&color=fff'
       }
     });
   } catch (error) {
