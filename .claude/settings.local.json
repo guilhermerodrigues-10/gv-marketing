@@ -17,7 +17,14 @@
       "Bash(find:*)",
       "Bash(npm run migrate:*)",
       "Bash(git init:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfeat: add Portainer auto-deploy configuration\n\n- GitHub Actions workflow for automated builds\n- Portainer stack with Watchtower for auto-updates\n- Environment configuration files\n- Complete deployment documentation\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git push:*)",
+      "Bash(git commit:*)",
+      "Bash(timeout 5 bash -c 'cat > /dev/tcp/72.61.135.194/8080')",
+      "Bash(git rm:*)",
+      "Bash(grep:*)",
+      "Bash(ls:*)"
     ]
   }
 }
