@@ -10,7 +10,15 @@ export const userAPI = {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data;
+
+    // Map database fields to TypeScript interface
+    return (data || []).map((user: any) => ({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      avatarUrl: user.avatar_url,
+      role: user.role
+    }));
   },
 
   async getById(id: string) {
@@ -21,7 +29,15 @@ export const userAPI = {
       .single();
 
     if (error) throw error;
-    return data;
+    if (!data) return null;
+
+    return {
+      id: data.id,
+      name: data.name,
+      email: data.email,
+      avatarUrl: data.avatar_url,
+      role: data.role
+    };
   },
 
   async create(user: Omit<User, 'id'>) {
@@ -37,24 +53,41 @@ export const userAPI = {
       .single();
 
     if (error) throw error;
-    return data;
+    if (!data) throw new Error('No data returned from insert');
+
+    return {
+      id: data.id,
+      name: data.name,
+      email: data.email,
+      avatarUrl: data.avatar_url,
+      role: data.role
+    };
   },
 
   async update(id: string, updates: Partial<User>) {
+    const updateData: any = {};
+    if (updates.name !== undefined) updateData.name = updates.name;
+    if (updates.email !== undefined) updateData.email = updates.email;
+    if (updates.avatarUrl !== undefined) updateData.avatar_url = updates.avatarUrl;
+    if (updates.role !== undefined) updateData.role = updates.role;
+
     const { data, error } = await supabase
       .from('users')
-      .update({
-        name: updates.name,
-        email: updates.email,
-        avatar_url: updates.avatarUrl,
-        role: updates.role,
-      })
+      .update(updateData)
       .eq('id', id)
       .select()
       .single();
 
     if (error) throw error;
-    return data;
+    if (!data) return null;
+
+    return {
+      id: data.id,
+      name: data.name,
+      email: data.email,
+      avatarUrl: data.avatar_url,
+      role: data.role
+    };
   },
 
   async delete(id: string) {
