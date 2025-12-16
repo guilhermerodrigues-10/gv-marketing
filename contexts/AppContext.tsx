@@ -23,28 +23,28 @@ interface AppContextType extends AppState {
   toggleSidebar: () => void;
   
   // Task Actions
-  addTask: (task: Omit<Task, 'id' | 'createdAt' | 'timeTracked' | 'isTracking' | 'attachments'>) => void;
-  updateTask: (taskId: string, updates: Partial<Task>) => void;
-  deleteTask: (taskId: string) => void;
-  moveTask: (taskId: string, newStatus: string) => void;
+  addTask: (task: Omit<Task, 'id' | 'createdAt' | 'timeTracked' | 'isTracking' | 'attachments'>) => Promise<void>;
+  updateTask: (taskId: string, updates: Partial<Task>) => Promise<void>;
+  deleteTask: (taskId: string) => Promise<void>;
+  moveTask: (taskId: string, newStatus: string) => Promise<void>;
   setActiveDragTask: (taskId: string | null) => void;
-  toggleTimeTracking: (taskId: string) => void;
+  toggleTimeTracking: (taskId: string) => Promise<void>;
 
   // Project Actions
-  addProject: (project: Omit<Project, 'id' | 'members'>) => void;
-  updateProject: (projectId: string, updates: Partial<Project>) => void;
-  deleteProject: (projectId: string) => void;
-  toggleProjectMember: (projectId: string, userId: string) => void;
+  addProject: (project: Omit<Project, 'id' | 'members'>) => Promise<void>;
+  updateProject: (projectId: string, updates: Partial<Project>) => Promise<void>;
+  deleteProject: (projectId: string) => Promise<void>;
+  toggleProjectMember: (projectId: string, userId: string) => Promise<void>;
 
   // Column Actions
-  addColumn: (title: string) => void;
-  updateColumn: (columnId: string, title: string) => void;
-  deleteColumn: (columnId: string) => void;
+  addColumn: (title: string) => Promise<void>;
+  updateColumn: (columnId: string, title: string) => Promise<void>;
+  deleteColumn: (columnId: string) => Promise<void>;
 
   // Team Actions
-  addUser: (user: Omit<User, 'id'>) => void;
-  updateUser: (userId: string, updates: Partial<User>) => void;
-  deleteUser: (userId: string) => void;
+  addUser: (user: Omit<User, 'id'>) => Promise<void>;
+  updateUser: (userId: string, updates: Partial<User>) => Promise<void>;
+  deleteUser: (userId: string) => Promise<void>;
 
   // Notifications
   addNotification: (notification: Omit<Notification, 'id' | 'date' | 'read'>) => void;
@@ -111,6 +111,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const loadData = async () => {
       try {
         console.log('📥 Carregando dados do Supabase...');
+
+        // Carregar usuários
+        const usersData = await userAPI.getAll();
+        if (usersData.length > 0) {
+          setUsers(usersData);
+          console.log(`✅ ${usersData.length} usuário(s) carregado(s)`);
+        }
 
         // Carregar tarefas
         const tasksData = await taskAPI.getAll();
@@ -371,43 +378,73 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
-  // --- User Logic ---
-  const addUser = (userData: Omit<User, 'id'>) => {
-    const newUser = { ...userData, id: `u${Date.now()}` };
-    setUsers([...users, newUser]);
-  };
+  // --- User Logic com Supabase ---
+  const addUser = async (userData: Omit<User, 'id'>) => {
+    try {
+      await userAPI.create(userData);
 
-  const updateUser = (userId: string, updates: Partial<User>) => {
-    setUsers(prev => prev.map(u => u.id === userId ? { ...u, ...updates } : u));
-    if (user?.id === userId) {
-      setUser(prev => prev ? { ...prev, ...updates } : null);
+      // Recarregar lista de usuários
+      const updatedUsers = await userAPI.getAll();
+      setUsers(updatedUsers);
+
+      addNotification({ title: 'Membro Adicionado', message: `${userData.name} foi adicionado à equipe.`, type: 'success' });
+    } catch (error) {
+      console.error('Erro ao adicionar usuário:', error);
+      addNotification({ title: 'Erro', message: 'Não foi possível adicionar o membro.', type: 'error' });
     }
-    addNotification({ title: 'Usuário Atualizado', message: 'Dados do usuário foram alterados.', type: 'info' });
   };
 
-  const deleteUser = (userId: string) => {
+  const updateUser = async (userId: string, updates: Partial<User>) => {
+    try {
+      // Atualizar localmente primeiro
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, ...updates } : u));
+      if (user?.id === userId) {
+        setUser(prev => prev ? { ...prev, ...updates } : null);
+      }
+
+      // Atualizar no Supabase
+      await userAPI.update(userId, updates);
+
+      addNotification({ title: 'Usuário Atualizado', message: 'Dados do usuário foram alterados.', type: 'info' });
+    } catch (error) {
+      console.error('Erro ao atualizar usuário:', error);
+      // Reverter
+      const updatedUsers = await userAPI.getAll();
+      setUsers(updatedUsers);
+      addNotification({ title: 'Erro', message: 'Não foi possível atualizar o usuário.', type: 'error' });
+    }
+  };
+
+  const deleteUser = async (userId: string) => {
     // Prevent deleting yourself
     if (user?.id === userId) {
       alert('Você não pode remover sua própria conta!');
       return;
     }
 
-    // Remove user from users list
-    setUsers(prev => prev.filter(u => u.id !== userId));
+    try {
+      await userAPI.delete(userId);
 
-    // Remove user from all task assignees
-    setTasks(prev => prev.map(task => ({
-      ...task,
-      assignees: task.assignees.filter(id => id !== userId)
-    })));
+      // Remove user from users list
+      setUsers(prev => prev.filter(u => u.id !== userId));
 
-    // Remove user from all projects
-    setProjects(prev => prev.map(project => ({
-      ...project,
-      members: project.members.filter(id => id !== userId)
-    })));
+      // Remove user from all task assignees
+      setTasks(prev => prev.map(task => ({
+        ...task,
+        assignees: task.assignees.filter(id => id !== userId)
+      })));
 
-    addNotification({ title: 'Membro Removido', message: 'O membro foi removido da equipe.', type: 'info' });
+      // Remove user from all projects
+      setProjects(prev => prev.map(project => ({
+        ...project,
+        members: project.members.filter(id => id !== userId)
+      })));
+
+      addNotification({ title: 'Membro Removido', message: 'O membro foi removido da equipe.', type: 'info' });
+    } catch (error) {
+      console.error('Erro ao deletar usuário:', error);
+      addNotification({ title: 'Erro', message: 'Não foi possível remover o membro.', type: 'error' });
+    }
   };
 
   // --- Notification Logic ---
