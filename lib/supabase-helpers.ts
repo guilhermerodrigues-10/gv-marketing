@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { Task, User, Project, Notification, Asset, Column } from '../types';
+import { authAPI } from './api';
 
 // ============= USERS =============
 export const userAPI = {
@@ -43,48 +44,28 @@ export const userAPI = {
   async create(user: Omit<User, 'id'> & { password?: string }) {
     console.log('📝 Creating user:', user);
 
-    const insertData: any = {
-      name: user.name,
-      email: user.email,
-      avatar_url: user.avatarUrl,
-      role: user.role,
-    };
-
-    // If password is provided, hash it
-    if (user.password) {
-      try {
-        // Import bcryptjs dynamically for client-side use
-        const bcrypt = require('bcryptjs');
-        insertData.password_hash = await bcrypt.hash(user.password, 10);
-        console.log('✅ Password hashed');
-      } catch (err) {
-        console.warn('⚠️ Could not hash password client-side, sending to backend for hashing');
-        insertData.password = user.password; // Enviar senha pura para o backend fazer hash
-      }
+    if (!user.password) {
+      throw new Error('Senha é obrigatória para criar um novo usuário');
     }
 
-    const { data, error } = await supabase
-      .from('users')
-      .insert(insertData)
-      .select()
-      .single();
-
-    if (error) {
+    // Use the backend endpoint to create user (handles password hashing)
+    try {
+      console.log('📤 Sending to backend /auth/create-user');
+      const response = await authAPI.createUser(user.name, user.email, user.password, user.role);
+      
+      console.log('✅ User created:', response.user);
+      
+      return {
+        id: response.user.id,
+        name: response.user.name,
+        email: response.user.email,
+        avatarUrl: response.user.avatarUrl,
+        role: response.user.role
+      };
+    } catch (error: any) {
       console.error('❌ User creation error:', error);
       throw error;
     }
-    
-    if (!data) throw new Error('No data returned from insert');
-
-    console.log('✅ User created:', data);
-
-    return {
-      id: data.id,
-      name: data.name,
-      email: data.email,
-      avatarUrl: data.avatar_url,
-      role: data.role
-    };
   },
 
   async update(id: string, updates: Partial<User> & { password?: string }) {
@@ -93,11 +74,6 @@ export const userAPI = {
     if (updates.email !== undefined) updateData.email = updates.email;
     if (updates.avatarUrl !== undefined) updateData.avatar_url = updates.avatarUrl;
     if (updates.role !== undefined) updateData.role = updates.role;
-
-    // If password is provided, hash it
-    if (updates.password) {
-      try {
-        const bcrypt = require('bcryptjs');
         updateData.password_hash = await bcrypt.hash(updates.password, 10);
         console.log('✅ Password updated and hashed');
       } catch (err) {

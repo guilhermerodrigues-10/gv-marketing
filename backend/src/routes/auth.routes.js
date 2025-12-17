@@ -26,9 +26,20 @@ router.post('/login', async (req, res) => {
 
     const user = result.rows[0];
 
+    // Check if user has password set
+    if (!user.password_hash) {
+      console.warn('⚠️ User found but no password hash:', email);
+      return res.status(401).json({ error: 'Credenciais inválidas' });
+    }
+
     // Check password
-    const validPassword = await bcrypt.compare(password, user.password_hash);
-    if (!validPassword) {
+    try {
+      const validPassword = await bcrypt.compare(password, user.password_hash);
+      if (!validPassword) {
+        return res.status(401).json({ error: 'Credenciais inválidas' });
+      }
+    } catch (compareErr) {
+      console.error('⚠️ Error comparing password:', compareErr.message);
       return res.status(401).json({ error: 'Credenciais inválidas' });
     }
 
@@ -106,6 +117,54 @@ router.post('/register', async (req, res) => {
   } catch (error) {
     console.error('Register error:', error);
     res.status(500).json({ error: 'Erro ao registrar usuário' });
+  }
+});
+
+// POST /api/auth/create-user - Create user (admin endpoint, uses password field not password_hash)
+router.post('/create-user', async (req, res) => {
+  try {
+    const { name, email, password, role = 'Membro' } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'Nome, email e senha são obrigatórios' });
+    }
+
+    // Check if user already exists
+    const existingUser = await pool.query(
+      'SELECT id FROM users WHERE email = $1',
+      [email]
+    );
+
+    if (existingUser.rows.length > 0) {
+      return res.status(409).json({ error: 'Email já cadastrado' });
+    }
+
+    // Hash password
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    // Insert new user
+    const result = await pool.query(
+      'INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING id, name, email, role, avatar_url',
+      [name, email, passwordHash, role]
+    );
+
+    const newUser = result.rows[0];
+
+    console.log('✅ User created by admin:', email);
+
+    res.status(201).json({
+      success: true,
+      user: {
+        id: newUser.id,
+        name: newUser.name,
+        email: newUser.email,
+        role: newUser.role,
+        avatarUrl: newUser.avatar_url
+      }
+    });
+  } catch (error) {
+    console.error('Create user error:', error);
+    res.status(500).json({ error: 'Erro ao criar usuário' });
   }
 });
 
