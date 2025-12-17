@@ -187,16 +187,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // --- Task Logic com Supabase ---
   const addTask = async (newTaskData: Omit<Task, 'id' | 'createdAt' | 'timeTracked' | 'isTracking' | 'attachments'>) => {
     try {
+      console.log('🚀 Iniciando criação de tarefa:', newTaskData);
+
       // Criar no Supabase
-      await taskAPI.create(newTaskData);
+      const createdTask = await taskAPI.create(newTaskData);
+      console.log('✅ Tarefa criada no Supabase:', createdTask);
 
       // Recarregar lista
+      console.log('🔄 Recarregando lista de tarefas...');
       const updatedTasks = await taskAPI.getAll();
+      console.log('📋 Total de tarefas após reload:', updatedTasks.length);
       setTasks(updatedTasks);
 
       addNotification({ title: 'Nova Tarefa', message: `Tarefa "${newTaskData.title}" criada.`, type: 'info' });
     } catch (error) {
-      console.error('Erro ao criar tarefa:', error);
+      console.error('❌ ERRO ao criar tarefa:', error);
       addNotification({ title: 'Erro', message: 'Não foi possível criar a tarefa.', type: 'error' });
     }
   };
@@ -263,16 +268,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // --- Project Logic com Supabase ---
   const addProject = async (projectData: Omit<Project, 'id' | 'members'>) => {
     try {
+      console.log('🚀 Iniciando criação de projeto:', projectData);
       const memberIds = [user?.id || users[0].id];
-      await projectAPI.create(projectData, memberIds);
+      const createdProject = await projectAPI.create(projectData, memberIds);
+      console.log('✅ Projeto criado no Supabase:', createdProject);
 
       // Recarregar projetos
+      console.log('🔄 Recarregando lista de projetos...');
       const updatedProjects = await projectAPI.getAll();
+      console.log('📋 Total de projetos após reload:', updatedProjects.length);
       setProjects(updatedProjects);
 
       addNotification({ title: 'Novo Projeto', message: `Projeto "${projectData.name}" criado.`, type: 'success' });
     } catch (error) {
-      console.error('Erro ao criar projeto:', error);
+      console.error('❌ ERRO ao criar projeto:', error);
       addNotification({ title: 'Erro', message: 'Não foi possível criar o projeto.', type: 'error' });
     }
   };
