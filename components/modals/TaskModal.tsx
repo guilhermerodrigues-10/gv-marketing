@@ -24,7 +24,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
     projectId: '',
     assignees: [],
     attachments: [],
-    dueDate: ''
+    dueDate: undefined
   });
   
   // Manual Time Input State
@@ -91,7 +91,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
         description: formData.description || '',
         status: formData.status,
         priority: formData.priority,
-        dueDate: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
+        dueDate: formData.dueDate && formData.dueDate !== '' ? new Date(formData.dueDate).toISOString() : null,
         projectId: formData.projectId,
         assignees: formData.assignees || [],
         subtasks: formData.subtasks || [],
@@ -106,7 +106,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
         description: formData.description || '',
         status: formData.status!,
         priority: formData.priority!,
-        dueDate: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
+        dueDate: formData.dueDate && formData.dueDate !== '' ? new Date(formData.dueDate).toISOString() : null,
         projectId: formData.projectId!,
         assignees: formData.assignees || [],
         subtasks: formData.subtasks || [],
@@ -201,8 +201,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
               </label>
               <input
                 type="date"
-                value={formData.dueDate}
-                onChange={e => setFormData({...formData, dueDate: e.target.value})}
+                value={formData.dueDate || ''}
+                onChange={e => setFormData({...formData, dueDate: e.target.value || undefined})}
                 className="w-full rounded-lg border border-slate-300 bg-white dark:bg-slate-900 dark:border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-white cursor-pointer"
                 placeholder="dd/mm/aaaa"
               />
