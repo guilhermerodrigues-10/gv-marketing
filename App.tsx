@@ -17,7 +17,19 @@ import { AssetsPage } from './pages/AssetsPage';
 import { testSupabaseConnection } from './lib/test-supabase';
 
 const ProtectedLayout = () => {
-  const { user, sidebarOpen } = useApp();
+  const { user, sidebarOpen, isLoadingAuth } = useApp();
+
+  // Show loading while checking authentication
+  if (isLoadingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-black">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
+          <p className="text-slate-500 dark:text-slate-400">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -26,7 +38,7 @@ const ProtectedLayout = () => {
   return (
     <div className="min-h-screen bg-white dark:bg-black transition-colors">
       <Sidebar />
-      <div 
+      <div
         className={`flex flex-col min-h-screen transition-all duration-300 ${sidebarOpen ? 'md:ml-64' : 'md:ml-20'}`}
       >
         <Header />
