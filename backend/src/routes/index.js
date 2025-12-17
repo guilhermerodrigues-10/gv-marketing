@@ -291,7 +291,15 @@ router.post('/tasks', authMiddleware, async (req, res) => {
 
     await client.query('COMMIT');
 
-    res.status(201).json({ ...task, assignees, tags, subtasks, attachments: [] });
+    const taskData = { ...task, assignees, tags, subtasks, attachments: [] };
+
+    // Emit real-time event
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('task:created', taskData);
+    }
+
+    res.status(201).json(taskData);
   } catch (error) {
     await client.query('ROLLBACK');
     console.error('Create task error:', error);
@@ -356,7 +364,15 @@ router.put('/tasks/:id', authMiddleware, async (req, res) => {
 
     await client.query('COMMIT');
 
-    res.json({ ...result.rows[0], assignees, tags, subtasks });
+    const updatedTask = { ...result.rows[0], assignees, tags, subtasks };
+
+    // Emit real-time event
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('task:updated', updatedTask);
+    }
+
+    res.json(updatedTask);
   } catch (error) {
     await client.query('ROLLBACK');
     console.error('Update task error:', error);
@@ -373,6 +389,12 @@ router.delete('/tasks/:id', authMiddleware, async (req, res) => {
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Tarefa não encontrada' });
+    }
+
+    // Emit real-time event
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('task:deleted', { id: req.params.id });
     }
 
     res.json({ message: 'Tarefa removida com sucesso' });
