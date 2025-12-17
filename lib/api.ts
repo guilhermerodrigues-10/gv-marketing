@@ -173,6 +173,17 @@ export const assetsAPI = {
     const response = await api.delete(`/assets/${id}`);
     return response.data;
   },
+
+  uploadTaskAttachment: async (fileName: string, fileContent: string, projectId: string, taskId: string | undefined, uploadedBy: string) => {
+    const response = await api.post('/assets/upload-task-attachment', {
+      fileName,
+      fileContent,
+      projectId,
+      taskId,
+      uploadedBy
+    });
+    return response.data;
+  },
 };
 
 // ==================== NOTIFICATIONS ====================

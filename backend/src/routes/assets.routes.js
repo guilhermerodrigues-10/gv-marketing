@@ -136,4 +136,140 @@ router.get('/status', (req, res) => {
   });
 });
 
+// POST /api/assets/upload-task-attachment - Upload de anexo de task
+router.post('/upload-task-attachment', requireDropbox, async (req, res) => {
+  const { pool } = require('../config/database');
+  const client = await pool.connect();
+
+  try {
+    const { fileName, fileContent, projectId, taskId, uploadedBy } = req.body;
+
+    if (!fileName || !fileContent) {
+      return res.status(400).json({ error: 'fileName e fileContent são obrigatórios' });
+    }
+
+    console.log('📤 Uploading task attachment:', fileName, 'for task:', taskId);
+
+    // Converter base64 para buffer
+    const buffer = Buffer.from(fileContent, 'base64');
+    const fileSize = buffer.length;
+
+    // Detectar tipo de arquivo
+    const extension = fileName.split('.').pop().toLowerCase();
+    let fileType = 'document';
+    let mimeType = 'application/octet-stream';
+
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension)) {
+      fileType = 'image';
+      mimeType = `image/${extension === 'jpg' ? 'jpeg' : extension}`;
+    } else if (['mp4', 'avi', 'mov', 'wmv', 'webm'].includes(extension)) {
+      fileType = 'video';
+      mimeType = `video/${extension}`;
+    } else if (['pdf'].includes(extension)) {
+      mimeType = 'application/pdf';
+    }
+
+    // Definir path no Dropbox
+    const folder = projectId || 'tasks';
+    const timestamp = Date.now();
+    const path = `/GV-Marketing-Assets/${folder}/${timestamp}-${fileName}`;
+
+    console.log('📁 Upload path:', path);
+
+    // Upload para Dropbox
+    const uploadResult = await dropboxClient.filesUpload({
+      path,
+      contents: buffer,
+      mode: 'add',
+      autorename: true,
+      mute: false
+    });
+
+    console.log('✅ Upload successful to Dropbox');
+
+    // Criar link compartilhado
+    let shareUrl;
+    try {
+      const shareResult = await dropboxClient.sharingCreateSharedLinkWithSettings({
+        path: uploadResult.result.path_display,
+        settings: {
+          requested_visibility: 'public'
+        }
+      });
+      shareUrl = convertToDirectUrl(shareResult.result.url);
+    } catch (shareError) {
+      if (shareError.error?.error?.['.tag'] === 'shared_link_already_exists') {
+        const links = await dropboxClient.sharingListSharedLinks({
+          path: uploadResult.result.path_display
+        });
+        shareUrl = convertToDirectUrl(links.result.links[0].url);
+      } else {
+        throw shareError;
+      }
+    }
+
+    console.log('🔗 Share URL created');
+
+    await client.query('BEGIN');
+
+    // Salvar na tabela de assets
+    const assetResult = await client.query(
+      `INSERT INTO assets (name, url, path, type, mime_type, size, project_id, uploaded_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING *`,
+      [fileName, shareUrl, uploadResult.result.path_display, fileType, mimeType, fileSize, projectId, uploadedBy]
+    );
+
+    const asset = assetResult.rows[0];
+    console.log('✅ Asset saved to database:', asset.id);
+
+    // Se tiver taskId, criar vínculo na tabela attachments
+    if (taskId) {
+      await client.query(
+        `INSERT INTO attachments (task_id, name, url, type)
+         VALUES ($1, $2, $3, $4)`,
+        [taskId, fileName, shareUrl, fileType]
+      );
+      console.log('✅ Attachment linked to task:', taskId);
+    }
+
+    await client.query('COMMIT');
+
+    // Emitir evento real-time se houver taskId
+    const io = req.app.get('io');
+    if (io && taskId) {
+      io.emit('task:attachment-added', {
+        taskId,
+        attachment: {
+          id: asset.id,
+          name: fileName,
+          url: shareUrl,
+          type: fileType
+        }
+      });
+    }
+
+    res.json({
+      success: true,
+      asset: {
+        id: asset.id,
+        name: fileName,
+        url: shareUrl,
+        path: uploadResult.result.path_display,
+        type: fileType,
+        size: fileSize
+      }
+    });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('❌ Upload task attachment error:', error);
+    res.status(500).json({
+      error: 'Erro ao fazer upload do anexo',
+      details: error.message
+    });
+  } finally {
+    client.release();
+  }
+});
+
 module.exports = router;

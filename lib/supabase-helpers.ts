@@ -74,12 +74,10 @@ export const userAPI = {
     if (updates.email !== undefined) updateData.email = updates.email;
     if (updates.avatarUrl !== undefined) updateData.avatar_url = updates.avatarUrl;
     if (updates.role !== undefined) updateData.role = updates.role;
-        updateData.password_hash = await bcrypt.hash(updates.password, 10);
-        console.log('✅ Password updated and hashed');
-      } catch (err) {
-        console.warn('⚠️ Could not hash password client-side, sending to backend');
-        updateData.password = updates.password;
-      }
+
+    // Password updates should go through the backend API
+    if (updates.password) {
+      updateData.password = updates.password;
     }
 
     const { data, error } = await supabase

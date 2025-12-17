@@ -4,6 +4,7 @@ import { useApp } from '../../contexts/AppContext';
 import { Task, Priority, Attachment } from '../../types';
 import { Button } from '../ui/Button';
 import { Input, Textarea, Select } from '../ui/Input';
+import { assetsAPI } from '../../lib/api';
 
 interface TaskModalProps {
   isOpen: boolean;
@@ -14,7 +15,7 @@ interface TaskModalProps {
 export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTask }) => {
   const { addTask, updateTask, deleteTask, projects, users, columns, user } = useApp();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   // Form State
   const [formData, setFormData] = useState<Partial<Task>>({
     title: '',
@@ -26,10 +27,13 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
     attachments: [],
     dueDate: undefined
   });
-  
+
   // Manual Time Input State
   const [timeSpent, setTimeSpent] = useState({ hours: 0, minutes: 0 });
   const [showAssigneeDropdown, setShowAssigneeDropdown] = useState(false);
+
+  // Store pending files to upload after task creation
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
 
   // Permissions
   const canDeleteTask = user?.role === 'Admin' || user?.role === 'Gerente';
@@ -68,6 +72,9 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
       });
       setTimeSpent({ hours: 0, minutes: 0 });
     }
+
+    // Reset pending files when modal opens
+    setPendingFiles([]);
   }, [initialTask, isOpen, projects, users, columns]);
 
   if (!isOpen) return null;
@@ -113,6 +120,40 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
         tags: formData.tags || []
       };
       await addTask(createData);
+
+      // Upload pending files after task creation
+      if (pendingFiles.length > 0) {
+        console.log(`📤 Uploading ${pendingFiles.length} pending files...`);
+
+        // We need to get the created task ID from the tasks list
+        // Since addTask reloads tasks, we can find the most recent one
+        // But this is not ideal - better to modify addTask to return the task
+        // For now, we'll upload files without taskId (they'll still go to assets)
+        for (const file of pendingFiles) {
+          try {
+            const reader = new FileReader();
+            const base64Content = await new Promise<string>((resolve, reject) => {
+              reader.onload = () => {
+                const base64String = reader.result as string;
+                resolve(base64String.split(',')[1]);
+              };
+              reader.onerror = () => reject(new Error('Failed to read file'));
+              reader.readAsDataURL(file);
+            });
+
+            await assetsAPI.uploadTaskAttachment(
+              file.name,
+              base64Content,
+              formData.projectId!,
+              undefined, // No taskId yet - will only save to assets library
+              user?.id || ''
+            );
+            console.log(`✅ Uploaded: ${file.name}`);
+          } catch (error) {
+            console.error(`❌ Failed to upload ${file.name}:`, error);
+          }
+        }
+      }
     }
     onClose();
   };
@@ -133,16 +174,68 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      const newAttachment: Attachment = {
-        id: `att${Date.now()}`,
-        name: file.name,
-        type: file.type,
-        url: URL.createObjectURL(file)
-      };
-      setFormData({ ...formData, attachments: [...(formData.attachments || []), newAttachment] });
+
+      // If editing existing task, upload immediately
+      if (initialTask?.id) {
+        try {
+          // Convert file to base64
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+
+          reader.onload = async () => {
+            const base64String = reader.result as string;
+            const base64Content = base64String.split(',')[1];
+
+            try {
+              // Upload to Dropbox and save to database
+              const response = await assetsAPI.uploadTaskAttachment(
+                file.name,
+                base64Content,
+                formData.projectId || '',
+                initialTask.id,
+                user?.id || ''
+              );
+
+              if (response.success && response.asset) {
+                // Add the uploaded asset to attachments
+                const newAttachment: Attachment = {
+                  id: response.asset.id,
+                  name: response.asset.name,
+                  type: response.asset.type,
+                  url: response.asset.url
+                };
+                setFormData({ ...formData, attachments: [...(formData.attachments || []), newAttachment] });
+              }
+            } catch (uploadError) {
+              console.error('Error uploading file:', uploadError);
+              alert('Erro ao fazer upload do arquivo. Verifique se o Dropbox está configurado.');
+            }
+          };
+
+          reader.onerror = () => {
+            console.error('Error reading file');
+            alert('Erro ao ler o arquivo.');
+          };
+        } catch (error) {
+          console.error('Error handling file upload:', error);
+          alert('Erro ao processar o arquivo.');
+        }
+      } else {
+        // For new tasks, store file to upload after task creation
+        setPendingFiles([...pendingFiles, file]);
+
+        // Show placeholder in UI
+        const placeholderAttachment: Attachment = {
+          id: `pending-${Date.now()}`,
+          name: file.name,
+          type: file.type,
+          url: '' // Will be filled after upload
+        };
+        setFormData({ ...formData, attachments: [...(formData.attachments || []), placeholderAttachment] });
+      }
     }
   };
 

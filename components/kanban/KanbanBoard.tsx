@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { Task, Priority } from '../../types';
 import { TaskCard } from './TaskCard';
 import { Plus, Check, Edit2, Trash2, X, Filter } from 'lucide-react';
 import { TaskModal } from '../modals/TaskModal';
+import { useTaskEvents } from '../../lib/useSocket';
 
 interface KanbanBoardProps {
   projectId?: string;
@@ -13,12 +14,13 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ projectId }) => {
   const { tasks, columns, moveTask, setActiveDragTask, addColumn, updateColumn, deleteColumn, projects, user } = useApp();
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  
+  const [localTasks, setLocalTasks] = useState<Task[]>(tasks);
+
   // Filters
   const [filterPriority, setFilterPriority] = useState<string>('Todas');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewFilter, setViewFilter] = useState<string>('all'); // 'all' | 'mine' | projectId
-  
+
   // Column Management States
   const [newColumnTitle, setNewColumnTitle] = useState('');
   const [isAddingColumn, setIsAddingColumn] = useState(false);
@@ -29,6 +31,30 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ projectId }) => {
   const canManageColumns = user?.role === 'Admin' || user?.role === 'Gerente';
 
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
+
+  // Sync local tasks with AppContext tasks
+  useEffect(() => {
+    setLocalTasks(tasks);
+  }, [tasks]);
+
+  // Real-time WebSocket listeners
+  useTaskEvents(
+    // onTaskCreated
+    (newTask: Task) => {
+      console.log('🆕 Task created via WebSocket:', newTask);
+      setLocalTasks(prev => [...prev, newTask]);
+    },
+    // onTaskUpdated
+    (updatedTask: Task) => {
+      console.log('♻️ Task updated via WebSocket:', updatedTask);
+      setLocalTasks(prev => prev.map(t => t.id === updatedTask.id ? updatedTask : t));
+    },
+    // onTaskDeleted
+    (data: { id: string }) => {
+      console.log('🗑️ Task deleted via WebSocket:', data.id);
+      setLocalTasks(prev => prev.filter(t => t.id !== data.id));
+    }
+  );
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -94,7 +120,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ projectId }) => {
   };
 
   // Filter Logic: Global vs Project Specific vs My Tasks
-  const filteredTasks = tasks.filter(task => {
+  const filteredTasks = localTasks.filter(task => {
     // 1. Mandatory Project Prop (if component is used inside ProjectDetailsPage)
     if (projectId && task.projectId !== projectId) {
       return false;

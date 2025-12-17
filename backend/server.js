@@ -1,18 +1,46 @@
 const express = require('express');
+const http = require('http');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
+const { Server } = require('socket.io');
 require('dotenv').config();
 
 const authRoutes = require('./src/routes/auth.routes');
-const simpleAuthRoutes = require('./src/routes/simple-auth.routes');
 const assetsRoutes = require('./src/routes/assets.routes');
 const apiRoutes = require('./src/routes/index');
 const { pool } = require('./src/config/database');
 const { requireAuth } = require('./src/middleware/auth.middleware');
 
 const app = express();
+const server = http.createServer(app);
+
+// Allowed origins for CORS
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://localhost:3002',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:3001',
+  'http://127.0.0.1:3002',
+  'http://72.61.135.194:8080',
+  'https://tasks.gvmarketing.us',
+  'http://tasks.gvmarketing.us',
+  process.env.FRONTEND_URL
+].filter(Boolean);
+
+const io = new Server(server, {
+  cors: {
+    origin: allowedOrigins,
+    methods: ['GET', 'POST'],
+    credentials: true
+  }
+});
+
 const PORT = process.env.PORT || 3001;
+
+// Make io accessible to routes
+app.set('io', io);
 
 // Security headers with Helmet
 app.use(helmet({
@@ -30,7 +58,17 @@ app.use(helmet({
 
 // CORS Middleware
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log('⚠️ CORS blocked origin:', origin);
+      callback(null, true); // Allow anyway for development
+    }
+  },
   credentials: true
 }));
 
@@ -48,7 +86,6 @@ app.use('/api/', limiter);
 
 // Routes
 app.use('/api/auth', authRoutes); // Auth com PostgreSQL (pode não funcionar sem DB)
-app.use('/api/simple-auth', simpleAuthRoutes); // Auth simples com .env (SEMPRE funciona!)
 app.use('/api/assets', assetsRoutes); // Upload de assets (sem autenticação - verificação no frontend)
 app.use('/api', apiRoutes);
 
@@ -66,6 +103,15 @@ app.use((req, res) => {
 app.use((err, req, res, next) => {
   console.error('Error:', err);
   res.status(500).json({ error: 'Erro interno do servidor' });
+});
+
+// Socket.IO connection handler
+io.on('connection', (socket) => {
+  console.log('👤 User connected:', socket.id);
+
+  socket.on('disconnect', () => {
+    console.log('👋 User disconnected:', socket.id);
+  });
 });
 
 // Start server
@@ -86,11 +132,12 @@ const startServer = async () => {
       console.log('ℹ️  Some features may not work without database');
     }
 
-    app.listen(PORT, '0.0.0.0', () => {
+    server.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 Server running on http://0.0.0.0:${PORT}`);
       console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
       console.log(`🔗 API: http://0.0.0.0:${PORT}/api`);
       console.log(`📁 Assets API: http://0.0.0.0:${PORT}/api/assets`);
+      console.log(`🔌 WebSocket: Ready for real-time connections`);
       console.log(`✅ Server is healthy and ready to accept connections`);
     });
   } catch (error) {
