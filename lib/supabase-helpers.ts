@@ -40,20 +40,43 @@ export const userAPI = {
     };
   },
 
-  async create(user: Omit<User, 'id'>) {
+  async create(user: Omit<User, 'id'> & { password?: string }) {
+    console.log('📝 Creating user:', user);
+
+    const insertData: any = {
+      name: user.name,
+      email: user.email,
+      avatar_url: user.avatarUrl,
+      role: user.role,
+    };
+
+    // If password is provided, hash it
+    if (user.password) {
+      try {
+        // Import bcryptjs dynamically for client-side use
+        const bcrypt = require('bcryptjs');
+        insertData.password_hash = await bcrypt.hash(user.password, 10);
+        console.log('✅ Password hashed');
+      } catch (err) {
+        console.warn('⚠️ Could not hash password client-side, sending to backend for hashing');
+        insertData.password = user.password; // Enviar senha pura para o backend fazer hash
+      }
+    }
+
     const { data, error } = await supabase
       .from('users')
-      .insert({
-        name: user.name,
-        email: user.email,
-        avatar_url: user.avatarUrl,
-        role: user.role,
-      })
+      .insert(insertData)
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('❌ User creation error:', error);
+      throw error;
+    }
+    
     if (!data) throw new Error('No data returned from insert');
+
+    console.log('✅ User created:', data);
 
     return {
       id: data.id,
@@ -64,12 +87,24 @@ export const userAPI = {
     };
   },
 
-  async update(id: string, updates: Partial<User>) {
+  async update(id: string, updates: Partial<User> & { password?: string }) {
     const updateData: any = {};
     if (updates.name !== undefined) updateData.name = updates.name;
     if (updates.email !== undefined) updateData.email = updates.email;
     if (updates.avatarUrl !== undefined) updateData.avatar_url = updates.avatarUrl;
     if (updates.role !== undefined) updateData.role = updates.role;
+
+    // If password is provided, hash it
+    if (updates.password) {
+      try {
+        const bcrypt = require('bcryptjs');
+        updateData.password_hash = await bcrypt.hash(updates.password, 10);
+        console.log('✅ Password updated and hashed');
+      } catch (err) {
+        console.warn('⚠️ Could not hash password client-side, sending to backend');
+        updateData.password = updates.password;
+      }
+    }
 
     const { data, error } = await supabase
       .from('users')
