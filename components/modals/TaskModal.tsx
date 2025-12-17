@@ -79,7 +79,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
     const processedData = {
       ...formData,
       timeTracked: totalSeconds,
-      dueDate: formData.dueDate ? new Date(formData.dueDate).toISOString() : '',
+      dueDate: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
       subtasks: formData.subtasks || []
     };
 
