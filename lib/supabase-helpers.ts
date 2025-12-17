@@ -250,19 +250,24 @@ export const taskAPI = {
 
   async create(task: Omit<Task, 'id' | 'createdAt' | 'timeTracked' | 'isTracking' | 'attachments'>) {
     console.log('📝 Creating task:', task);
+    console.log('📋 Full task object:', JSON.stringify(task, null, 2));
 
     // Ensure dueDate is null if empty string or undefined
     const dueDate = task.dueDate && task.dueDate !== '' ? task.dueDate : null;
 
-    const insertData = {
+    const insertData: any = {
       title: task.title,
       description: task.description || '',
       status: task.status,
       priority: task.priority,
       due_date: dueDate,
-      project_id: task.projectId,
-      tags: (task.tags && task.tags.length > 0) ? task.tags : null,
+      project_id: task.projectId || null,
     };
+
+    // Only include tags if it has values
+    if (task.tags && task.tags.length > 0) {
+      insertData.tags = task.tags;
+    }
 
     console.log('📤 Sending to Supabase:', JSON.stringify(insertData, null, 2));
 
@@ -276,6 +281,7 @@ export const taskAPI = {
     if (taskError) {
       console.error('❌ Task creation error:', taskError);
       console.error('📊 Data sent:', insertData);
+      console.error('🔍 Error details:', { code: taskError.code, message: taskError.message, details: taskError.details });
       throw taskError;
     }
     console.log('✅ Task created:', taskData);
