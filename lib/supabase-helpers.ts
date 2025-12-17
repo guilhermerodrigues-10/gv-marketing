@@ -251,6 +251,9 @@ export const taskAPI = {
   async create(task: Omit<Task, 'id' | 'createdAt' | 'timeTracked' | 'isTracking' | 'attachments'>) {
     console.log('📝 Creating task:', task);
 
+    // Ensure dueDate is null if empty string or undefined
+    const dueDate = task.dueDate && task.dueDate !== '' ? task.dueDate : null;
+
     // Create task
     const { data: taskData, error: taskError } = await supabase
       .from('tasks')
@@ -259,7 +262,7 @@ export const taskAPI = {
         description: task.description || '',
         status: task.status,
         priority: task.priority,
-        due_date: task.dueDate || null,
+        due_date: dueDate,
         project_id: task.projectId,
         tags: task.tags || [],
       })
@@ -307,7 +310,10 @@ export const taskAPI = {
     if (updates.description !== undefined) updateData.description = updates.description;
     if (updates.status !== undefined) updateData.status = updates.status;
     if (updates.priority !== undefined) updateData.priority = updates.priority;
-    if (updates.dueDate !== undefined) updateData.due_date = updates.dueDate;
+    // Ensure dueDate is null if empty string
+    if (updates.dueDate !== undefined) {
+      updateData.due_date = updates.dueDate && updates.dueDate !== '' ? updates.dueDate : null;
+    }
     if (updates.projectId !== undefined) updateData.project_id = updates.projectId;
     if (updates.tags !== undefined) updateData.tags = updates.tags;
     if (updates.timeTracked !== undefined) updateData.time_tracked = updates.timeTracked;
