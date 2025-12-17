@@ -284,7 +284,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const addProject = async (projectData: Omit<Project, 'id' | 'members'>) => {
     try {
       console.log('🚀 Iniciando criação de projeto:', projectData);
-      const memberIds = [user?.id || users[0].id];
+      console.log('👤 Current user:', user);
+      console.log('👥 All users:', users);
+      
+      const userId = user?.id || users[0]?.id;
+      console.log('✅ Using user ID for project member:', userId);
+      
+      if (!userId) {
+        throw new Error('No user ID available');
+      }
+
+      const memberIds = [userId];
       const createdProject = await projectAPI.create(projectData, memberIds);
       console.log('✅ Projeto criado no Supabase:', createdProject);
 
@@ -297,6 +307,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       addNotification({ title: 'Novo Projeto', message: `Projeto "${projectData.name}" criado.`, type: 'success' });
     } catch (error) {
       console.error('❌ ERRO ao criar projeto:', error);
+      if (error instanceof Error) {
+        console.error('📋 Mensagem do erro:', error.message);
+        console.error('🔍 Stack:', error.stack);
+      } else if (typeof error === 'object' && error !== null) {
+        console.error('📊 Erro detalhado:', JSON.stringify(error, null, 2));
+      }
       addNotification({ title: 'Erro', message: 'Não foi possível criar o projeto.', type: 'error' });
     }
   };
