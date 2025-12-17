@@ -14,53 +14,77 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Email e senha são obrigatórios' });
     }
 
-    // Find user by email
-    const result = await pool.query(
-      'SELECT id, name, email, password_hash, role, avatar_url FROM users WHERE email = $1',
-      [email]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(401).json({ error: 'Credenciais inválidas' });
-    }
-
-    const user = result.rows[0];
-
-    // Check if user has password set
-    if (!user.password_hash) {
-      console.warn('⚠️ User found but no password hash:', email);
-      return res.status(401).json({ error: 'Credenciais inválidas' });
-    }
-
-    // Check password
+    // Try to find user in database first
     try {
-      const validPassword = await bcrypt.compare(password, user.password_hash);
-      if (!validPassword) {
-        return res.status(401).json({ error: 'Credenciais inválidas' });
+      const result = await pool.query(
+        'SELECT id, name, email, password_hash, role, avatar_url FROM users WHERE email = $1',
+        [email]
+      );
+
+      if (result.rows.length > 0) {
+        const user = result.rows[0];
+
+        // Check if user has password set
+        if (user.password_hash) {
+          // Check password
+          try {
+            const validPassword = await bcrypt.compare(password, user.password_hash);
+            if (validPassword) {
+              // Generate JWT
+              const token = jwt.sign(
+                { id: user.id, email: user.email, role: user.role },
+                process.env.JWT_SECRET,
+                { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+              );
+
+              console.log('✅ Login successful (database):', email);
+              return res.json({
+                token,
+                user: {
+                  id: user.id,
+                  name: user.name,
+                  email: user.email,
+                  role: user.role,
+                  avatarUrl: user.avatar_url
+                }
+              });
+            }
+          } catch (compareErr) {
+            console.warn('⚠️ Password comparison error:', compareErr.message);
+          }
+        }
       }
-    } catch (compareErr) {
-      console.error('⚠️ Error comparing password:', compareErr.message);
-      return res.status(401).json({ error: 'Credenciais inválidas' });
+    } catch (dbError) {
+      console.warn('⚠️ Database query error:', dbError.message);
     }
 
-    // Generate JWT
-    const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
-    );
+    // Fallback: Try admin credentials from .env
+    const adminEmail = process.env.ADMIN_EMAIL;
+    const adminPassword = process.env.ADMIN_PASSWORD;
 
-    // Return user data without password
-    res.json({
-      token,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        avatarUrl: user.avatar_url
-      }
-    });
+    if (adminEmail && adminPassword && email === adminEmail && password === adminPassword) {
+      // Generate JWT
+      const token = jwt.sign(
+        { id: 'admin-001', email: adminEmail, role: 'Admin' },
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      );
+
+      console.log('✅ Login successful (admin fallback):', email);
+      return res.json({
+        token,
+        user: {
+          id: 'admin-001',
+          name: 'Admin',
+          email: adminEmail,
+          role: 'Admin',
+          avatarUrl: 'https://ui-avatars.com/api/?name=Admin+GV&background=7c3aed&color=fff'
+        }
+      });
+    }
+
+    console.log('❌ Login failed:', email);
+    return res.status(401).json({ error: 'Credenciais inválidas' });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ error: 'Erro ao fazer login' });
