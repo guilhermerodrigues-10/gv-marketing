@@ -51,8 +51,8 @@ export const DashboardPage: React.FC = () => {
         {/* Task Status Chart */}
         <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
           <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">Distribuição de Tarefas</h3>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="h-80" style={{ minHeight: '320px' }}>
+            <ResponsiveContainer width="100%" height="100%" minHeight={320}>
               <PieChart>
                 <Pie
                   data={statusData}
@@ -87,8 +87,8 @@ export const DashboardPage: React.FC = () => {
         {/* Priority Chart */}
         <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
           <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">Tarefas por Prioridade</h3>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="h-80" style={{ minHeight: '320px' }}>
+            <ResponsiveContainer width="100%" height="100%" minHeight={320}>
               <BarChart data={priorityData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.2} />
                 <XAxis dataKey="name" stroke="#94a3b8" />
