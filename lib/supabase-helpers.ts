@@ -127,6 +127,9 @@ export const projectAPI = {
   },
 
   async create(project: Omit<Project, 'id' | 'members'>, memberIds: string[] = []) {
+    console.log('📝 Creating project:', project);
+    console.log('👥 Member IDs:', memberIds);
+
     const { data: projectData, error: projectError } = await supabase
       .from('projects')
       .insert({
@@ -138,18 +141,40 @@ export const projectAPI = {
       .select()
       .single();
 
-    if (projectError) throw projectError;
+    if (projectError) {
+      console.error('❌ Project creation error:', projectError);
+      throw projectError;
+    }
 
-    // Add members
+    // Add members - validate UUIDs
     if (memberIds.length > 0) {
-      const { error: membersError } = await supabase
-        .from('project_members')
-        .insert(memberIds.map(userId => ({
-          project_id: projectData.id,
-          user_id: userId
-        })));
+      // Filter out invalid UUIDs
+      const validUuids = memberIds.filter(id => {
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        return uuidRegex.test(id);
+      });
 
-      if (membersError) throw membersError;
+      console.log('✅ Valid UUIDs:', validUuids);
+      console.log('❌ Invalid UUIDs:', memberIds.filter(id => {
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        return !uuidRegex.test(id);
+      }));
+
+      if (validUuids.length > 0) {
+        const { error: membersError } = await supabase
+          .from('project_members')
+          .insert(validUuids.map(userId => ({
+            project_id: projectData.id,
+            user_id: userId
+          })));
+
+        if (membersError) {
+          console.error('❌ Members add error:', membersError);
+          throw membersError;
+        }
+      } else {
+        console.warn('⚠️ No valid member UUIDs provided');
+      }
     }
 
     return {
