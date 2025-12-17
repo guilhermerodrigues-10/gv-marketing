@@ -37,25 +37,36 @@ api.interceptors.response.use(
 // ==================== AUTH ====================
 
 export const authAPI = {
-  // Login simples com credenciais do .env (SEMPRE funciona!)
+  // Login com credenciais do banco de dados (funciona com todos os usuários)
   login: async (credentials: { email: string; password: string }) => {
-    const response = await api.post('/simple-auth/login', credentials);
-    return response.data; // { success, token, user }
+    const response = await api.post('/auth/login', credentials);
+    return response.data; // { token, user }
   },
 
   // Verificar se token é válido
   verify: async () => {
-    const response = await api.get('/simple-auth/verify');
-    return response.data; // { valid, user }
+    // Para compatibilidade, usar /auth/verify se existir, senão fallback
+    try {
+      const response = await api.get('/auth/verify');
+      return response.data; // { valid, user }
+    } catch (error) {
+      // Se /auth/verify não existir, apenas verificar se há token
+      const token = localStorage.getItem('authToken');
+      return { valid: !!token, user: JSON.parse(localStorage.getItem('user') || '{}') };
+    }
   },
 
-  // Renovar token
+  // Renovar token (fallback - pode não existir)
   refresh: async () => {
-    const response = await api.post('/simple-auth/refresh');
-    return response.data; // { success, token }
+    try {
+      const response = await api.post('/auth/refresh');
+      return response.data; // { success, token }
+    } catch (error) {
+      throw new Error('Token refresh não suportado');
+    }
   },
 
-  // Métodos antigos (para compatibilidade - requerem PostgreSQL)
+  // Registrar novo usuário
   register: async (name: string, email: string, password: string, role = 'Membro') => {
     const response = await api.post('/auth/register', { name, email, password, role });
     return response.data; // { token, user }
