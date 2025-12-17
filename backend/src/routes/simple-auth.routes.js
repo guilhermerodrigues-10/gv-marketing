@@ -1,9 +1,11 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+const { pool } = require('../config/database');
 const router = express.Router();
 
 // POST /api/simple-auth/login
-// Autentica com credenciais fixas do .env (sem banco de dados)
+// Autentica com credenciais do banco de dados (com fallback para .env)
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -14,40 +16,122 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Email e senha são obrigatórios' });
     }
 
-    // Validar credenciais com .env
+    // Tentar autenticar no banco de dados primeiro
+    try {
+      const result = await pool.query(
+        'SELECT id, name, email, password_hash, role, avatar_url FROM users WHERE email = $1',
+        [email]
+      );
+
+      if (result.rows.length > 0) {
+        const user = result.rows[0];
+        // Verificar senha
+        const validPassword = await bcrypt.compare(password, user.password_hash);
+        if (validPassword) {
+          // Gerar JWT
+          const token = jwt.sign(
+            { id: user.id, email: user.email, role: user.role },
+            process.env.JWT_SECRET,
+            { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+          );
+
+          console.log('✅ Login successful for:', email);
+
+          return res.json({
+            success: true,
+            token,
+            user: {
+              id: user.id,
+              name: user.name,
+              email: user.email,
+              role: user.role,
+              avatarUrl: user.avatar_url
+            }
+          });
+        }
+      }
+    } catch (dbError) {
+      console.warn('⚠️ Database error, trying .env credentials:', dbError.message);
+    }
+
+    // Fallback: Validar credenciais com .env (apenas admin)
     const adminEmail = process.env.ADMIN_EMAIL;
     const adminPassword = process.env.ADMIN_PASSWORD;
 
-    if (!adminEmail || !adminPassword) {
-      console.error('❌ ADMIN_EMAIL ou ADMIN_PASSWORD não configurados no .env');
-      return res.status(500).json({ error: 'Servidor não configurado corretamente' });
+    if (adminEmail && adminPassword && email === adminEmail && password === adminPassword) {
+      // Gerar JWT
+      const token = jwt.sign(
+        {
+          email: adminEmail,
+          role: 'Admin',
+          userId: 'admin-001'
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      );
+
+      console.log('✅ Admin login successful');
+
+      return res.json({
+        success: true,
+        token,
+        user: {
+          id: 'admin-001',
+          name: 'Admin',
+          email: adminEmail,
+          role: 'Admin',
+          avatarUrl: 'https://ui-avatars.com/api/?name=Admin'
+        }
+      });
     }
 
-    // Comparar credenciais
-    if (email !== adminEmail || password !== adminPassword) {
-      console.log('❌ Credenciais inválidas');
-      return res.status(401).json({ error: 'Credenciais inválidas' });
-    }
+    console.log('❌ Credenciais inválidas');
+    return res.status(401).json({ error: 'Credenciais inválidas' });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ error: 'Erro ao fazer login' });
+  }
+});
 
-    // Gerar JWT
-    const token = jwt.sign(
-      {
-        email: adminEmail,
-        role: 'Admin',
-        userId: 'admin-001'
-      },
+// POST /api/simple-auth/verify
+router.post('/verify', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  
+  if (!token) {
+    return res.status(401).json({ valid: false });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    res.json({ valid: true, user: decoded });
+  } catch {
+    res.status(401).json({ valid: false });
+  }
+});
+
+// POST /api/simple-auth/refresh
+router.post('/refresh', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  
+  if (!token) {
+    return res.status(401).json({ error: 'Token não fornecido' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    // Gerar novo token
+    const newToken = jwt.sign(
+      { id: decoded.id, email: decoded.email, role: decoded.role },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
     );
 
-    console.log('✅ Login successful for:', email);
-
-    // Retornar token e dados do usuário
-    res.json({
-      success: true,
-      token,
-      user: {
-        id: 'admin-001',
+    res.json({ success: true, token: newToken });
+  } catch (error) {
+    res.status(401).json({ error: 'Token inválido' });
+  }
+});
         name: 'Admin GV Marketing',
         email: adminEmail,
         role: 'Admin',
