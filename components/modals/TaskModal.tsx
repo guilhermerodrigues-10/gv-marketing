@@ -59,9 +59,11 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
         status: initialTask?.status || columns[0]?.id || 'backlog',
         // Use preset projectId if available, else default
         projectId: initialTask?.projectId || projects[0]?.id || '',
-        assignees: [users[0].id],
+        assignees: users.length > 0 ? [users[0].id] : [],
         attachments: [],
         dueDate: '',
+        tags: [],
+        subtasks: [],
         ...initialTask // Apply any other presets passed
       });
       setTimeSpent({ hours: 0, minutes: 0 });
@@ -73,20 +75,44 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Validate required fields
+    if (!formData.title?.trim()) {
+      alert('Por favor, preencha o título da tarefa');
+      return;
+    }
+
     // Convert Hours/Minutes back to total seconds
     const totalSeconds = (Number(timeSpent.hours) * 3600) + (Number(timeSpent.minutes) * 60);
 
-    const processedData = {
-      ...formData,
-      timeTracked: totalSeconds,
-      dueDate: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
-      subtasks: formData.subtasks || []
-    };
-
     if (initialTask?.id) {
-      await updateTask(initialTask.id, processedData);
+      // UPDATE: include all fields including timeTracked
+      const updateData = {
+        title: formData.title,
+        description: formData.description || '',
+        status: formData.status,
+        priority: formData.priority,
+        dueDate: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
+        projectId: formData.projectId,
+        assignees: formData.assignees || [],
+        subtasks: formData.subtasks || [],
+        tags: formData.tags || [],
+        timeTracked: totalSeconds
+      };
+      await updateTask(initialTask.id, updateData);
     } else {
-      await addTask(processedData as any);
+      // CREATE: exclude timeTracked (will be 0 by default)
+      const createData = {
+        title: formData.title!,
+        description: formData.description || '',
+        status: formData.status!,
+        priority: formData.priority!,
+        dueDate: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
+        projectId: formData.projectId!,
+        assignees: formData.assignees || [],
+        subtasks: formData.subtasks || [],
+        tags: formData.tags || []
+      };
+      await addTask(createData);
     }
     onClose();
   };

@@ -14,6 +14,7 @@ interface AppState {
   isDarkMode: boolean;
   activeTaskId: string | null;
   sidebarOpen: boolean;
+  isLoadingAuth: boolean;
 }
 
 interface AppContextType extends AppState {
@@ -67,6 +68,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [isLoadingAuth, setIsLoadingAuth] = useState(true);
 
   // Load theme preference
   useEffect(() => {
@@ -82,18 +84,25 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     if (token && savedUser) {
       try {
-        const user = JSON.parse(savedUser);
-        setUser(user);
+        const parsedUser = JSON.parse(savedUser);
+        setUser(parsedUser);
 
         // Verify if token is still valid
-        authAPI.verify().catch(() => {
-          // Token expired or invalid
-          localStorage.clear();
-          setUser(null);
-        });
+        authAPI.verify()
+          .catch(() => {
+            // Token expired or invalid
+            localStorage.clear();
+            setUser(null);
+          })
+          .finally(() => {
+            setIsLoadingAuth(false);
+          });
       } catch {
         localStorage.clear();
+        setIsLoadingAuth(false);
       }
+    } else {
+      setIsLoadingAuth(false);
     }
   }, []);
 
@@ -477,7 +486,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   return (
     <AppContext.Provider value={{
-      user, users, tasks, projects, columns, isDarkMode, activeTaskId, sidebarOpen, notifications,
+      user, users, tasks, projects, columns, isDarkMode, activeTaskId, sidebarOpen, notifications, isLoadingAuth,
       login, logout, toggleTheme, toggleSidebar,
       addTask, updateTask, deleteTask, moveTask, setActiveDragTask: setActiveTaskId, toggleTimeTracking,
       addProject, updateProject, deleteProject, toggleProjectMember,
