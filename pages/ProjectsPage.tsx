@@ -36,19 +36,19 @@ export const ProjectsPage: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (editingProject) {
-      updateProject(editingProject.id, formData);
+      await updateProject(editingProject.id, formData);
     } else {
-      addProject(formData);
+      await addProject(formData);
     }
     setIsModalOpen(false);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if(confirm('Tem certeza? Isso pode afetar tarefas vinculadas.')) {
-      deleteProject(id);
+      await deleteProject(id);
     }
   };
 
