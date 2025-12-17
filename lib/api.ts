@@ -72,6 +72,12 @@ export const authAPI = {
     return response.data; // { token, user }
   },
 
+  // Criar usuário como admin (endpoint específico)
+  createUser: async (name: string, email: string, password: string, role = 'Membro') => {
+    const response = await api.post('/auth/create-user', { name, email, password, role });
+    return response.data; // { success, user }
+  },
+
   getMe: async () => {
     const response = await api.get('/auth/me');
     return response.data; // user
