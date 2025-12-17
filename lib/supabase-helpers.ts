@@ -312,8 +312,23 @@ export const taskAPI = {
     console.log('📝 Creating task:', task);
     console.log('📋 Full task object:', JSON.stringify(task, null, 2));
 
+    // Validate UUID format
+    const isValidUUID = (id: string) => {
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      return uuidRegex.test(id);
+    };
+
     // Ensure dueDate is null if empty string or undefined
     const dueDate = task.dueDate && task.dueDate !== '' ? task.dueDate : null;
+
+    // Validate and set project_id (null if invalid UUID)
+    let projectId = null;
+    if (task.projectId && isValidUUID(task.projectId)) {
+      projectId = task.projectId;
+      console.log('✅ Valid project UUID:', projectId);
+    } else if (task.projectId) {
+      console.warn('⚠️ Invalid project UUID (mock data?):', task.projectId, '- will be set to null');
+    }
 
     const insertData: any = {
       title: task.title,
@@ -321,7 +336,7 @@ export const taskAPI = {
       status: task.status,
       priority: task.priority,
       due_date: dueDate,
-      project_id: task.projectId || null,
+      project_id: projectId,
     };
 
     // Only include tags if it has values
