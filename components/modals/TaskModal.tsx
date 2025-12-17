@@ -91,9 +91,9 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
     onClose();
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (initialTask?.id && confirm('Tem certeza que deseja excluir esta tarefa?')) {
-      deleteTask(initialTask.id);
+      await deleteTask(initialTask.id);
       onClose();
     }
   };
