@@ -280,8 +280,12 @@ export const taskAPI = {
 
     if (taskError) {
       console.error('❌ Task creation error:', taskError);
-      console.error('📊 Data sent:', insertData);
-      console.error('🔍 Error details:', { code: taskError.code, message: taskError.message, details: taskError.details });
+      console.error('📊 Error code:', taskError.code);
+      console.error('📊 Error message:', taskError.message);
+      console.error('📊 Error details:', taskError.details);
+      console.error('📊 Error hint:', taskError.hint);
+      console.error('📊 Full error object:', JSON.stringify(taskError, null, 2));
+      console.error('📊 Data attempted to send:', insertData);
       throw taskError;
     }
     console.log('✅ Task created:', taskData);

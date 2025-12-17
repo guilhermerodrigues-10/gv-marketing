@@ -211,6 +211,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       addNotification({ title: 'Nova Tarefa', message: `Tarefa "${newTaskData.title}" criada.`, type: 'info' });
     } catch (error) {
       console.error('❌ ERRO ao criar tarefa:', error);
+      if (error instanceof Error) {
+        console.error('📋 Mensagem do erro:', error.message);
+        console.error('🔍 Stack:', error.stack);
+      } else if (typeof error === 'object' && error !== null) {
+        console.error('📊 Erro detalhado:', JSON.stringify(error, null, 2));
+      }
       addNotification({ title: 'Erro', message: 'Não foi possível criar a tarefa.', type: 'error' });
     }
   };
