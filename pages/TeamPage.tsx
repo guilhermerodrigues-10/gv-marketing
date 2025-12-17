@@ -157,14 +157,21 @@ export const TeamPage: React.FC = () => {
                 required 
               />
               
-              <Input 
-                label={editingUser ? "Nova Senha (opcional)" : "Senha Provisória"}
-                type="password"
-                value={formData.password} 
-                onChange={e => setFormData({...formData, password: e.target.value})} 
-                placeholder={editingUser ? "Deixe em branco para manter" : ""}
-                required={!editingUser}
-              />
+              <div>
+                <Input 
+                  label={editingUser ? "Nova Senha (opcional)" : "Definir Senha de Acesso"}
+                  type="password"
+                  value={formData.password} 
+                  onChange={e => setFormData({...formData, password: e.target.value})} 
+                  placeholder={editingUser ? "Deixe em branco para manter" : "Digite uma senha segura"}
+                  required={!editingUser}
+                />
+                {!editingUser && (
+                  <p className="mt-2 text-sm text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-3 py-2 rounded">
+                    ℹ️ A senha que você definir aqui será usada pelo membro para fazer login na plataforma.
+                  </p>
+                )}
+              </div>
 
               <Select 
                 label="Função"
