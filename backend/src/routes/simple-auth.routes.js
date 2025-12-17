@@ -25,29 +25,43 @@ router.post('/login', async (req, res) => {
 
       if (result.rows.length > 0) {
         const user = result.rows[0];
-        // Verificar senha
-        const validPassword = await bcrypt.compare(password, user.password_hash);
-        if (validPassword) {
-          // Gerar JWT
-          const token = jwt.sign(
-            { id: user.id, email: user.email, role: user.role },
-            process.env.JWT_SECRET,
-            { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
-          );
+        
+        // Se o usuário existe mas não tem senha hash, significa que foi criado sem senha
+        if (!user.password_hash) {
+          console.warn('⚠️ User found but no password hash:', email);
+          // Continua para tentar .env credentials
+        } else {
+          // Verificar senha
+          try {
+            const validPassword = await bcrypt.compare(password, user.password_hash);
+            if (validPassword) {
+              // Gerar JWT
+              const token = jwt.sign(
+                { id: user.id, email: user.email, role: user.role },
+                process.env.JWT_SECRET,
+                { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+              );
 
-          console.log('✅ Login successful for:', email);
+              console.log('✅ Login successful for:', email);
 
-          return res.json({
-            success: true,
-            token,
-            user: {
-              id: user.id,
-              name: user.name,
-              email: user.email,
-              role: user.role,
-              avatarUrl: user.avatar_url
+              return res.json({
+                success: true,
+                token,
+                user: {
+                  id: user.id,
+                  name: user.name,
+                  email: user.email,
+                  role: user.role,
+                  avatarUrl: user.avatar_url
+                }
+              });
+            } else {
+              console.warn('⚠️ Invalid password for user:', email);
+              // Continua para tentar .env credentials
             }
-          });
+          } catch (compareErr) {
+            console.warn('⚠️ Error comparing password:', compareErr.message);
+          }
         }
       }
     } catch (dbError) {
@@ -80,7 +94,7 @@ router.post('/login', async (req, res) => {
           name: 'Admin',
           email: adminEmail,
           role: 'Admin',
-          avatarUrl: 'https://ui-avatars.com/api/?name=Admin'
+          avatarUrl: 'https://ui-avatars.com/api/?name=Admin+GV&background=7c3aed&color=fff'
         }
       });
     }
@@ -132,17 +146,6 @@ router.post('/refresh', async (req, res) => {
     res.status(401).json({ error: 'Token inválido' });
   }
 });
-        name: 'Admin GV Marketing',
-        email: adminEmail,
-        role: 'Admin',
-        avatarUrl: 'https://ui-avatars.com/api/?name=Admin+GV&background=7c3aed&color=fff'
-      }
-    });
-  } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ error: 'Erro ao fazer login' });
-  }
-});
 
 // GET /api/simple-auth/verify
 // Verifica se o token JWT é válido
@@ -168,40 +171,6 @@ router.get('/verify', (req, res) => {
   } catch (error) {
     console.error('Token verification error:', error.message);
     res.status(401).json({ error: 'Token inválido ou expirado', valid: false });
-  }
-});
-
-// POST /api/simple-auth/refresh
-// Renova o token JWT
-router.post('/refresh', (req, res) => {
-  try {
-    const token = req.headers.authorization?.split(' ')[1];
-
-    if (!token) {
-      return res.status(401).json({ error: 'Token não fornecido' });
-    }
-
-    // Verificar token atual
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    // Gerar novo token
-    const newToken = jwt.sign(
-      {
-        email: decoded.email,
-        role: decoded.role,
-        userId: decoded.userId
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
-    );
-
-    res.json({
-      success: true,
-      token: newToken
-    });
-  } catch (error) {
-    console.error('Token refresh error:', error.message);
-    res.status(401).json({ error: 'Token inválido ou expirado' });
   }
 });
 
