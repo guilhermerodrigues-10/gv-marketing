@@ -57,9 +57,9 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [users, setUsers] = useState<User[]>(MOCK_USERS);
-  const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS);
-  const [projects, setProjects] = useState<Project[]>(MOCK_PROJECTS);
+  const [users, setUsers] = useState<User[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [columns, setColumns] = useState<Column[]>(BOARD_COLUMNS);
   const [notifications, setNotifications] = useState<Notification[]>([
     { id: 'n1', title: 'Bem-vindo!', message: 'Seu cadastro foi realizado com sucesso.', date: new Date().toISOString(), read: false, type: 'success' },
