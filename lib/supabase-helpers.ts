@@ -264,7 +264,7 @@ export const taskAPI = {
         priority: task.priority,
         due_date: dueDate,
         project_id: task.projectId,
-        tags: task.tags || [],
+        tags: (task.tags && task.tags.length > 0) ? task.tags : null,
       })
       .select()
       .single();
@@ -315,7 +315,7 @@ export const taskAPI = {
       updateData.due_date = updates.dueDate && updates.dueDate !== '' ? updates.dueDate : null;
     }
     if (updates.projectId !== undefined) updateData.project_id = updates.projectId;
-    if (updates.tags !== undefined) updateData.tags = updates.tags;
+    if (updates.tags !== undefined) updateData.tags = (updates.tags && updates.tags.length > 0) ? updates.tags : null;
     if (updates.timeTracked !== undefined) updateData.time_tracked = updates.timeTracked;
     if (updates.isTracking !== undefined) updateData.is_tracking = updates.isTracking;
 
