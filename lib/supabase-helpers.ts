@@ -254,23 +254,28 @@ export const taskAPI = {
     // Ensure dueDate is null if empty string or undefined
     const dueDate = task.dueDate && task.dueDate !== '' ? task.dueDate : null;
 
+    const insertData = {
+      title: task.title,
+      description: task.description || '',
+      status: task.status,
+      priority: task.priority,
+      due_date: dueDate,
+      project_id: task.projectId,
+      tags: (task.tags && task.tags.length > 0) ? task.tags : null,
+    };
+
+    console.log('📤 Sending to Supabase:', JSON.stringify(insertData, null, 2));
+
     // Create task
     const { data: taskData, error: taskError } = await supabase
       .from('tasks')
-      .insert({
-        title: task.title,
-        description: task.description || '',
-        status: task.status,
-        priority: task.priority,
-        due_date: dueDate,
-        project_id: task.projectId,
-        tags: (task.tags && task.tags.length > 0) ? task.tags : null,
-      })
+      .insert(insertData)
       .select()
       .single();
 
     if (taskError) {
       console.error('❌ Task creation error:', taskError);
+      console.error('📊 Data sent:', insertData);
       throw taskError;
     }
     console.log('✅ Task created:', taskData);
