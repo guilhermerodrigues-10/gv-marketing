@@ -29,7 +29,9 @@
       "Bash(node create-admin.js:*)",
       "Bash(del \"c:\\Users\\guilh\\Downloads\\gv-marketing (1)\\backend\\create-admin.js\")",
       "Bash(node remove-trigger.js:*)",
-      "Bash(\"c:\\Users\\guilh\\Downloads\\gv-marketing (1)\\docker-compose.nginx.yml\")"
+      "Bash(\"c:\\Users\\guilh\\Downloads\\gv-marketing (1)\\docker-compose.nginx.yml\")",
+      "Bash(\"c:\\Users\\guilh\\Downloads\\gv-marketing (1)\\deploy.sh\")",
+      "Bash(\"c:\\Users\\guilh\\Downloads\\gv-marketing (1)\\deploy.bat\")"
     ]
   }
 }
