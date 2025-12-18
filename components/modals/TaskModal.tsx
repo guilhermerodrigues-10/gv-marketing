@@ -197,6 +197,29 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
     }
   };
 
+  const handleDownloadAttachment = async (url: string, filename: string) => {
+    try {
+      // Force download by fetching and creating blob
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Clean up blob URL
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      // Fallback to opening in new tab
+      window.open(url, '_blank');
+    }
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -431,14 +454,14 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
                              >
                                 <Eye size={16} />
                              </a>
-                             <a
-                                href={att.url}
-                                download={att.name}
+                             <button
+                                type="button"
+                                onClick={() => handleDownloadAttachment(att.url, att.name)}
                                 className="p-1 text-slate-400 hover:text-green-500 hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors"
                                 title="Baixar arquivo"
                              >
                                 <Download size={16} />
-                             </a>
+                             </button>
                              <button
                                 type="button"
                                 onClick={() => removeAttachment(att.id)}
