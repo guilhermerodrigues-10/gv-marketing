@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Upload, File as FileIcon, Trash2, Check, Clock, Download, Eye, Play, Pause, Square } from 'lucide-react';
+import { X, Upload, File as FileIcon, Trash2, Check, Clock, Download, Eye, Play, Pause, Square, Loader2 } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
 import { Task, Priority, Attachment } from '../../types';
 import { Button } from '../ui/Button';
@@ -38,6 +38,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
 
   // Store pending files to upload after task creation
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Permissions
   const canDeleteTask = user?.role === 'Admin' || user?.role === 'Gerente';
@@ -281,6 +282,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
 
       // If editing existing task, upload immediately
       if (initialTask?.id) {
+        setIsUploading(true);
         try {
           // Convert file to base64
           const reader = new FileReader();
@@ -313,16 +315,20 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
             } catch (uploadError) {
               console.error('Error uploading file:', uploadError);
               alert('Erro ao fazer upload do arquivo. Verifique se o Dropbox está configurado.');
+            } finally {
+              setIsUploading(false);
             }
           };
 
           reader.onerror = () => {
             console.error('Error reading file');
             alert('Erro ao ler o arquivo.');
+            setIsUploading(false);
           };
         } catch (error) {
           console.error('Error handling file upload:', error);
           alert('Erro ao processar o arquivo.');
+          setIsUploading(false);
         }
       } else {
         // For new tasks, store file to upload after task creation
@@ -548,10 +554,17 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
                           </div>
                        </div>
                     ))}
-                    <button 
-                       type="button" 
+                    {isUploading && (
+                       <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-sm border border-blue-200 dark:border-blue-800">
+                          <Loader2 size={14} className="text-blue-500 animate-spin" />
+                          <span className="text-blue-600 dark:text-blue-400">Enviando arquivo...</span>
+                       </div>
+                    )}
+                    <button
+                       type="button"
                        onClick={() => fileInputRef.current?.click()}
-                       className="flex items-center px-3 py-2 border border-dashed border-slate-300 dark:border-slate-600 rounded-lg text-slate-500 hover:text-primary-500 hover:border-primary-500 text-sm transition-colors"
+                       disabled={isUploading}
+                       className="flex items-center px-3 py-2 border border-dashed border-slate-300 dark:border-slate-600 rounded-lg text-slate-500 hover:text-primary-500 hover:border-primary-500 text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                        <Upload size={14} className="mr-2" /> Upload
                     </button>
