@@ -77,7 +77,15 @@ router.put('/users/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'Usuário não encontrado' });
     }
 
-    res.json(result.rows[0]);
+    const userData = result.rows[0];
+
+    // Emit real-time event
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('user:updated', userData);
+    }
+
+    res.json(userData);
   } catch (error) {
     console.error('Update user error:', error);
     res.status(500).json({ error: 'Erro ao atualizar usuário' });
@@ -91,6 +99,12 @@ router.delete('/users/:id', authMiddleware, checkRole('Admin', 'Gerente'), async
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    // Emit real-time event
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('user:deleted', { id: req.params.id });
     }
 
     res.json({ message: 'Usuário removido com sucesso' });
@@ -147,7 +161,15 @@ router.post('/projects', authMiddleware, checkRole('Admin', 'Gerente'), async (r
 
     await client.query('COMMIT');
 
-    res.status(201).json({ ...project, members });
+    const projectData = { ...project, members };
+
+    // Emit real-time event
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('project:created', projectData);
+    }
+
+    res.status(201).json(projectData);
   } catch (error) {
     await client.query('ROLLBACK');
     console.error('Create project error:', error);
@@ -189,7 +211,15 @@ router.put('/projects/:id', authMiddleware, checkRole('Admin', 'Gerente'), async
 
     await client.query('COMMIT');
 
-    res.json({ ...result.rows[0], members });
+    const projectData = { ...result.rows[0], members };
+
+    // Emit real-time event
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('project:updated', projectData);
+    }
+
+    res.json(projectData);
   } catch (error) {
     await client.query('ROLLBACK');
     console.error('Update project error:', error);
@@ -206,6 +236,12 @@ router.delete('/projects/:id', authMiddleware, checkRole('Admin', 'Gerente'), as
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Projeto não encontrado' });
+    }
+
+    // Emit real-time event
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('project:deleted', { id: req.params.id });
     }
 
     res.json({ message: 'Projeto removido com sucesso' });
