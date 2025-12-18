@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <!-- Background circle with gold color -->
-  <circle cx="50" cy="50" r="48" fill="#e9ad40"/>
-  <circle cx="50" cy="50" r="48" fill="none" stroke="#d08d25" stroke-width="4"/>
-
-  <!-- GV text in white -->
-  <text x="50" y="70" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="#ffffff" text-anchor="middle">GV</text>
-</svg>
