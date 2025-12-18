@@ -3,6 +3,7 @@ import { Task, User, Project, Column, Notification } from '../types';
 import { INITIAL_TASKS, MOCK_USERS, MOCK_PROJECTS, BOARD_COLUMNS } from '../constants';
 import { authAPI } from '../lib/api';
 import { taskAPI, projectAPI, userAPI, columnAPI } from '../lib/supabase-helpers';
+import { useSocket } from '../lib/useSocket';
 
 interface AppState {
   user: User | null;
@@ -51,11 +52,15 @@ interface AppContextType extends AppState {
   addNotification: (notification: Omit<Notification, 'id' | 'date' | 'read'>) => void;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
+
+  // Refresh
+  refreshData: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const socket = useSocket();
   const [user, setUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -162,12 +167,106 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Simulate time tracking interval
   useEffect(() => {
     const interval = setInterval(() => {
-      setTasks(prev => prev.map(t => 
+      setTasks(prev => prev.map(t =>
         t.isTracking ? { ...t, timeTracked: t.timeTracked + 1 } : t
       ));
     }, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  // WebSocket real-time listeners
+  useEffect(() => {
+    if (!socket) return;
+
+    // Task events
+    socket.on('task:created', async () => {
+      console.log('🔔 New task created, refreshing...');
+      const tasksData = await taskAPI.getAll();
+      setTasks(tasksData);
+    });
+
+    socket.on('task:updated', async () => {
+      console.log('🔔 Task updated, refreshing...');
+      const tasksData = await taskAPI.getAll();
+      setTasks(tasksData);
+    });
+
+    socket.on('task:deleted', async () => {
+      console.log('🔔 Task deleted, refreshing...');
+      const tasksData = await taskAPI.getAll();
+      setTasks(tasksData);
+    });
+
+    // Project events
+    socket.on('project:created', async () => {
+      console.log('🔔 New project created, refreshing...');
+      const projectsData = await projectAPI.getAll();
+      setProjects(projectsData);
+    });
+
+    socket.on('project:updated', async () => {
+      console.log('🔔 Project updated, refreshing...');
+      const projectsData = await projectAPI.getAll();
+      setProjects(projectsData);
+    });
+
+    socket.on('project:deleted', async () => {
+      console.log('🔔 Project deleted, refreshing...');
+      const projectsData = await projectAPI.getAll();
+      setProjects(projectsData);
+    });
+
+    // User events
+    socket.on('user:created', async () => {
+      console.log('🔔 New user created, refreshing...');
+      const usersData = await userAPI.getAll();
+      setUsers(usersData);
+    });
+
+    socket.on('user:updated', async () => {
+      console.log('🔔 User updated, refreshing...');
+      const usersData = await userAPI.getAll();
+      setUsers(usersData);
+    });
+
+    socket.on('user:deleted', async () => {
+      console.log('🔔 User deleted, refreshing...');
+      const usersData = await userAPI.getAll();
+      setUsers(usersData);
+    });
+
+    return () => {
+      socket.off('task:created');
+      socket.off('task:updated');
+      socket.off('task:deleted');
+      socket.off('project:created');
+      socket.off('project:updated');
+      socket.off('project:deleted');
+      socket.off('user:created');
+      socket.off('user:updated');
+      socket.off('user:deleted');
+    };
+  }, [socket]);
+
+  // Manual refresh function
+  const refreshData = async () => {
+    try {
+      console.log('🔄 Refreshing all data...');
+      const [tasksData, projectsData, usersData, columnsData] = await Promise.all([
+        taskAPI.getAll(),
+        projectAPI.getAll(),
+        userAPI.getAll(),
+        columnAPI.getAll()
+      ]);
+      setTasks(tasksData);
+      setProjects(projectsData);
+      setUsers(usersData);
+      setColumns(columnsData);
+      console.log('✅ Data refreshed successfully');
+    } catch (error) {
+      console.error('❌ Error refreshing data:', error);
+    }
+  };
 
   const login = async (email: string, password: string) => {
     try {
@@ -514,7 +613,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       addProject, updateProject, deleteProject, toggleProjectMember,
       addColumn, updateColumn, deleteColumn,
       addUser, updateUser, deleteUser,
-      addNotification, markAsRead, markAllAsRead
+      addNotification, markAsRead, markAllAsRead,
+      refreshData
     }}>
       {children}
     </AppContext.Provider>
