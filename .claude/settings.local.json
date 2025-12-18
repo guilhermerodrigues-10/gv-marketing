@@ -31,7 +31,8 @@
       "Bash(node remove-trigger.js:*)",
       "Bash(\"c:\\Users\\guilh\\Downloads\\gv-marketing (1)\\docker-compose.nginx.yml\")",
       "Bash(\"c:\\Users\\guilh\\Downloads\\gv-marketing (1)\\deploy.sh\")",
-      "Bash(\"c:\\Users\\guilh\\Downloads\\gv-marketing (1)\\deploy.bat\")"
+      "Bash(\"c:\\Users\\guilh\\Downloads\\gv-marketing (1)\\deploy.bat\")",
+      "Bash(\"c:\\Users\\guilh\\Downloads\\gv-marketing (1)\\DEPLOY.md\")"
     ]
   }
 }
