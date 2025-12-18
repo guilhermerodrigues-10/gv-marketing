@@ -32,7 +32,12 @@
       "Bash(\"c:\\Users\\guilh\\Downloads\\gv-marketing (1)\\docker-compose.nginx.yml\")",
       "Bash(\"c:\\Users\\guilh\\Downloads\\gv-marketing (1)\\deploy.sh\")",
       "Bash(\"c:\\Users\\guilh\\Downloads\\gv-marketing (1)\\deploy.bat\")",
-      "Bash(\"c:\\Users\\guilh\\Downloads\\gv-marketing (1)\\DEPLOY.md\")"
+      "Bash(\"c:\\Users\\guilh\\Downloads\\gv-marketing (1)\\DEPLOY.md\")",
+      "Bash(node check-user.js:*)",
+      "Bash(node update-password.js:*)",
+      "Bash(gh run list:*)",
+      "Bash(git restore:*)",
+      "Bash(npm run build:*)"
     ]
   }
 }
