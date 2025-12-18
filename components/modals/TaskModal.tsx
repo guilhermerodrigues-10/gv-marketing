@@ -197,27 +197,27 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
     }
   };
 
-  const handleDownloadAttachment = async (url: string, filename: string) => {
-    try {
-      // Force download by fetching and creating blob
-      const response = await fetch(url);
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
+  const handleDownloadAttachment = (url: string, filename: string) => {
+    // Convert Dropbox URL to force download
+    let downloadUrl = url;
 
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      // Clean up blob URL
-      window.URL.revokeObjectURL(blobUrl);
-    } catch (error) {
-      console.error('Error downloading file:', error);
-      // Fallback to opening in new tab
-      window.open(url, '_blank');
+    // If it's a Dropbox URL, add ?dl=1 to force download
+    if (url.includes('dropbox')) {
+      downloadUrl = url.replace(/[?&]dl=0/, '?dl=1');
+      if (!downloadUrl.includes('dl=1')) {
+        downloadUrl += (url.includes('?') ? '&' : '?') + 'dl=1';
+      }
     }
+
+    // Create temporary link and trigger download
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = filename;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
