@@ -61,7 +61,7 @@ services:
         - traefik.enable=true
         - traefik.http.routers.gv_marketing_backend.rule=Host(`tasks.gvmarketing.us`) && (PathPrefix(`/api`) || PathPrefix(`/socket.io`))
         - traefik.http.routers.gv_marketing_backend.entrypoints=websecure
-        - traefik.http.routers.gv_marketing_backend.priority=2
+        - traefik.http.routers.gv_marketing_backend.priority=10
         - traefik.http.routers.gv_marketing_backend.tls.certresolver=letsencryptresolver
         - traefik.http.routers.gv_marketing_backend.service=gv_marketing_backend
         - traefik.http.services.gv_marketing_backend.loadbalancer.server.port=3001
