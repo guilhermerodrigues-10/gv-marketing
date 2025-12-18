@@ -3,11 +3,7 @@ version: '3.8'
 services:
   # Frontend React
   frontend:
-    build:
-      context: https://github.com/guilhermerodrigues-10/gv-marketing.git#main
-      dockerfile: Dockerfile.frontend
-    container_name: gv-marketing-frontend
-    restart: unless-stopped
+    image: ghcr.io/guilhermerodrigues-10/gv-marketing-frontend:latest
     networks:
       - GovisaNet
     deploy:
@@ -32,11 +28,7 @@ services:
 
   # Backend Node.js
   backend:
-    build:
-      context: https://github.com/guilhermerodrigues-10/gv-marketing.git#main:backend
-      dockerfile: Dockerfile
-    container_name: gv-marketing-backend
-    restart: unless-stopped
+    image: ghcr.io/guilhermerodrigues-10/gv-marketing-backend:latest
     networks:
       - GovisaNet
     environment:
