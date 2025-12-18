@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Upload, File as FileIcon, Trash2, Check, Clock, Download, Eye } from 'lucide-react';
+import { X, Upload, File as FileIcon, Trash2, Check, Clock, Download, Eye, Play, Pause, Square } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
 import { Task, Priority, Attachment } from '../../types';
 import { Button } from '../ui/Button';
@@ -30,8 +30,10 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
     dueDate: undefined
   });
 
-  // Manual Time Input State
-  const [timeSpent, setTimeSpent] = useState({ hours: 0, minutes: 0 });
+  // Stopwatch State
+  const [timeSpent, setTimeSpent] = useState({ hours: 0, minutes: 0, seconds: 0 });
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [showAssigneeDropdown, setShowAssigneeDropdown] = useState(false);
 
   // Store pending files to upload after task creation
@@ -49,11 +51,12 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
         dueDate: initialTask.dueDate ? new Date(initialTask.dueDate).toISOString().slice(0, 16) : ''
       });
 
-      // Calculate Hours and Minutes from total seconds
+      // Calculate Hours, Minutes, and Seconds from total seconds
       const totalSeconds = initialTask.timeTracked || 0;
       const h = Math.floor(totalSeconds / 3600);
       const m = Math.floor((totalSeconds % 3600) / 60);
-      setTimeSpent({ hours: h, minutes: m });
+      const s = totalSeconds % 60;
+      setTimeSpent({ hours: h, minutes: m, seconds: s });
 
     } else {
       // CREATE MODE (with possible presets)
@@ -72,12 +75,52 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
         subtasks: [],
         ...initialTask // Apply any other presets passed
       });
-      setTimeSpent({ hours: 0, minutes: 0 });
+      setTimeSpent({ hours: 0, minutes: 0, seconds: 0 });
     }
 
-    // Reset pending files when modal opens
-    setPendingFiles([]);
+    // Cleanup timer on unmount
+    return () => {
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+      }
+    };
   }, [initialTask, isOpen, projects, users, columns]);
+
+  // Timer effect - runs the stopwatch
+  useEffect(() => {
+    if (isTimerRunning) {
+      timerIntervalRef.current = setInterval(() => {
+        setTimeSpent(prev => {
+          let newSeconds = prev.seconds + 1;
+          let newMinutes = prev.minutes;
+          let newHours = prev.hours;
+
+          if (newSeconds >= 60) {
+            newSeconds = 0;
+            newMinutes += 1;
+          }
+
+          if (newMinutes >= 60) {
+            newMinutes = 0;
+            newHours += 1;
+          }
+
+          return { hours: newHours, minutes: newMinutes, seconds: newSeconds };
+        });
+      }, 1000);
+    } else {
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+        timerIntervalRef.current = null;
+      }
+    }
+
+    return () => {
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+      }
+    };
+  }, [isTimerRunning]);
 
   // WebSocket listener for real-time attachment updates
   useEffect(() => {
@@ -123,8 +166,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
       return;
     }
 
-    // Convert Hours/Minutes back to total seconds
-    const totalSeconds = (Number(timeSpent.hours) * 3600) + (Number(timeSpent.minutes) * 60);
+    // Convert Hours/Minutes/Seconds back to total seconds
+    const totalSeconds = (Number(timeSpent.hours) * 3600) + (Number(timeSpent.minutes) * 60) + Number(timeSpent.seconds);
 
     if (initialTask?.id) {
       // UPDATE: include all fields including timeTracked
@@ -371,30 +414,38 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
               />
             </div>
 
-            {/* Time Tracking Manual Input */}
+            {/* Time Tracking Stopwatch */}
             <div className="col-span-1">
                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Tempo Gasto</label>
                <div className="flex items-center space-x-2">
-                 <div className="relative w-full">
-                    <Input 
-                       type="number" 
-                       min="0"
-                       value={timeSpent.hours}
-                       onChange={(e) => setTimeSpent({ ...timeSpent, hours: Math.max(0, parseInt(e.target.value) || 0) })}
-                       className="pr-8"
-                    />
-                    <span className="absolute right-3 top-2.5 text-xs text-slate-400 font-medium pointer-events-none">H</span>
+                 {/* Display Time */}
+                 <div className="flex-1 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-lg px-4 py-2 border border-slate-300 dark:border-slate-700">
+                   <Clock size={16} className="text-slate-500 dark:text-slate-400 mr-2" />
+                   <span className="text-lg font-mono font-semibold text-slate-900 dark:text-white">
+                     {String(timeSpent.hours).padStart(2, '0')}:{String(timeSpent.minutes).padStart(2, '0')}:{String(timeSpent.seconds || 0).padStart(2, '0')}
+                   </span>
                  </div>
-                 <div className="relative w-full">
-                    <Input 
-                       type="number" 
-                       min="0"
-                       max="59"
-                       value={timeSpent.minutes}
-                       onChange={(e) => setTimeSpent({ ...timeSpent, minutes: Math.min(59, Math.max(0, parseInt(e.target.value) || 0)) })}
-                       className="pr-8"
-                    />
-                    <span className="absolute right-3 top-2.5 text-xs text-slate-400 font-medium pointer-events-none">M</span>
+                 {/* Control Buttons */}
+                 <div className="flex space-x-1">
+                   <button
+                     type="button"
+                     onClick={() => setIsTimerRunning(!isTimerRunning)}
+                     className={`p-2 rounded-lg ${isTimerRunning ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-green-500 hover:bg-green-600'} text-white transition-colors`}
+                     title={isTimerRunning ? 'Pausar' : 'Iniciar'}
+                   >
+                     {isTimerRunning ? <Pause size={16} /> : <Play size={16} />}
+                   </button>
+                   <button
+                     type="button"
+                     onClick={() => {
+                       setIsTimerRunning(false);
+                       setTimeSpent({ hours: 0, minutes: 0, seconds: 0 });
+                     }}
+                     className="p-2 rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors"
+                     title="Resetar"
+                   >
+                     <Square size={16} />
+                   </button>
                  </div>
                </div>
             </div>
