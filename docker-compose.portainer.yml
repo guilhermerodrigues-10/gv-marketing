@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  # Nginx Gateway - Roteia para frontend e backend
+  nginx:
+    image: nginx:alpine
+    container_name: gv-marketing-nginx
+    restart: unless-stopped
+    ports:
+      - "8080:80"      # HTTP na porta 8080 (não conflita com n8n)
+      - "8443:443"     # HTTPS na porta 8443
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot:ro
+    networks:
+      - gv-network
+    depends_on:
+      - frontend
+      - backend
+
+  # Certbot - Let's Encrypt SSL
+  certbot:
+    image: certbot/certbot:latest
+    container_name: gv-marketing-certbot
+    restart: unless-stopped
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot; sleep 12h & wait $!; done;'"
+    networks:
+      - gv-network
+
+  # Frontend React
+  frontend:
+    build:
+      context: https://github.com/guilhermerodrigues-10/gv-marketing.git#main
+      dockerfile: Dockerfile.frontend
+    container_name: gv-marketing-frontend
+    restart: unless-stopped
+    networks:
+      - gv-network
+
+  # Backend Node.js
+  backend:
+    build:
+      context: https://github.com/guilhermerodrigues-10/gv-marketing.git#main:backend
+      dockerfile: Dockerfile
+    container_name: gv-marketing-backend
+    restart: unless-stopped
+    networks:
+      - gv-network
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - FRONTEND_URL=https://tasks.gvmarketing.us
+      - JWT_SECRET=9b1af44452364c0ef77cf19d7b0fb495868320c2f7f31bf98ed8a00c5a9dc08b6aef35e6db6ef407daed9025c4b948128dbe685f48d91679c6885ccdb5639bda
+      - JWT_EXPIRES_IN=7d
+      - DB_HOST=aws-0-us-west-2.pooler.supabase.com
+      - DB_PORT=6543
+      - DB_NAME=postgres
+      - DB_USER=postgres.hywyqckkahlxevvtzkfw
+      - DB_PASSWORD=1N6sup0mk3x5R0ym
+      - SUPABASE_URL=https://hywyqckkahlxevvtzkfw.supabase.co
+      - SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh5d3lxY2trYWhseGV2dnR6a2Z3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU0MDAyMTUsImV4cCI6MjA4MDk3NjIxNX0.Gc8rHZfSIWVNiyUP43eRqCLD6i80CPS7YiiZct0rmHg
+
+networks:
+  gv-network:
+    driver: bridge
