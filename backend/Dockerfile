@@ -39,9 +39,5 @@ ENV FRONTEND_URL=http://72.61.135.194:8080
 ENV ADMIN_EMAIL=admin@gvmarketing.com
 ENV ADMIN_PASSWORD=GVMarketing2024!@Secure
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3001/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
-
 # Iniciar servidor
 CMD ["node", "server.js"]
