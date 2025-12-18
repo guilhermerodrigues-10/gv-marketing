@@ -1,16 +1,23 @@
 import React, { useState } from 'react';
-import { Bell, Search, Moon, Sun, Menu, User as UserIcon, LogOut, Check } from 'lucide-react';
+import { Bell, Search, Moon, Sun, Menu, User as UserIcon, LogOut, Check, RefreshCw } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
 
 export const Header: React.FC = () => {
-  const { user, logout, toggleTheme, isDarkMode, toggleSidebar, notifications, markAsRead, markAllAsRead } = useApp();
+  const { user, logout, toggleTheme, isDarkMode, toggleSidebar, notifications, markAsRead, markAllAsRead, refreshData } = useApp();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
   const handleNotificationClick = (id: string) => {
     markAsRead(id);
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refreshData();
+    setTimeout(() => setIsRefreshing(false), 500);
   };
 
   return (
@@ -35,8 +42,18 @@ export const Header: React.FC = () => {
       </div>
 
       <div className="flex items-center space-x-2 md:space-x-4">
+        {/* Refresh Button */}
+        <button
+          onClick={handleRefresh}
+          disabled={isRefreshing}
+          className="p-2 rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-50"
+          title="Atualizar dados"
+        >
+          <RefreshCw size={20} className={isRefreshing ? 'animate-spin' : ''} />
+        </button>
+
         {/* Theme Toggle */}
-        <button 
+        <button
           onClick={toggleTheme}
           className="p-2 rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
         >
