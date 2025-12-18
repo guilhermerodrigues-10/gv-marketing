@@ -488,6 +488,8 @@ export const AssetsPage: React.FC = () => {
             ))}
           </div>
         )}
+          </div>
+        </div>
       </div>
 
       {/* Asset Details Modal */}
