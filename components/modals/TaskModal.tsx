@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Upload, File as FileIcon, Trash2, Check, Clock } from 'lucide-react';
+import { X, Upload, File as FileIcon, Trash2, Check, Clock, Download } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
 import { Task, Priority, Attachment } from '../../types';
 import { Button } from '../ui/Button';
 import { Input, Textarea, Select } from '../ui/Input';
 import { assetsAPI } from '../../lib/api';
+import { useSocket } from '../../lib/useSocket';
 
 interface TaskModalProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ interface TaskModalProps {
 export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTask }) => {
   const { addTask, updateTask, deleteTask, projects, users, columns, user } = useApp();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const socket = useSocket();
 
   // Form State
   const [formData, setFormData] = useState<Partial<Task>>({
@@ -76,6 +78,27 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
     // Reset pending files when modal opens
     setPendingFiles([]);
   }, [initialTask, isOpen, projects, users, columns]);
+
+  // WebSocket listener for real-time attachment updates
+  useEffect(() => {
+    if (!socket || !initialTask?.id) return;
+
+    const handleAttachmentAdded = (data: { taskId: string; attachment: Attachment }) => {
+      // Only update if this is the current task
+      if (data.taskId === initialTask.id) {
+        setFormData(prev => ({
+          ...prev,
+          attachments: [...(prev.attachments || []), data.attachment]
+        }));
+      }
+    };
+
+    socket.on('task:attachment-added', handleAttachmentAdded);
+
+    return () => {
+      socket.off('task:attachment-added', handleAttachmentAdded);
+    };
+  }, [socket, initialTask?.id]);
 
   if (!isOpen) return null;
 
@@ -398,6 +421,16 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
                        <div key={att.id} className="flex items-center p-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-sm border border-slate-200 dark:border-slate-700">
                           <FileIcon size={14} className="mr-2 text-primary-500" />
                           <span className="truncate max-w-[150px] mr-2 dark:text-white">{att.name}</span>
+                          <a
+                             href={att.url}
+                             download={att.name}
+                             target="_blank"
+                             rel="noopener noreferrer"
+                             className="text-slate-400 hover:text-primary-500 mr-2"
+                             title="Download"
+                          >
+                             <Download size={14} />
+                          </a>
                           <button type="button" onClick={() => removeAttachment(att.id)} className="text-slate-400 hover:text-red-500">
                              <Trash2 size={14} />
                           </button>
