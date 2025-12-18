@@ -160,6 +160,10 @@ router.post('/upload-task-attachment', requireDropbox, async (req, res) => {
       return res.status(400).json({ error: 'fileName e fileContent são obrigatórios' });
     }
 
+    // Converter strings vazias para null (UUID não aceita string vazia)
+    const cleanProjectId = projectId && projectId.trim() !== '' ? projectId : null;
+    const cleanUploadedBy = uploadedBy && uploadedBy.trim() !== '' ? uploadedBy : null;
+
     console.log('📤 Uploading task attachment:', fileName, 'for task:', taskId);
 
     // Converter base64 para buffer
@@ -229,7 +233,7 @@ router.post('/upload-task-attachment', requireDropbox, async (req, res) => {
       `INSERT INTO assets (name, url, path, type, mime_type, size, project_id, uploaded_by)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
-      [fileName, shareUrl, uploadResult.result.path_display, fileType, mimeType, fileSize, projectId, uploadedBy]
+      [fileName, shareUrl, uploadResult.result.path_display, fileType, mimeType, fileSize, cleanProjectId, cleanUploadedBy]
     );
 
     const asset = assetResult.rows[0];
