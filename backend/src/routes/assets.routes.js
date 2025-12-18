@@ -288,4 +288,52 @@ router.post('/upload-task-attachment', requireDropbox, async (req, res) => {
   }
 });
 
+// DELETE /api/assets/delete-attachment/:attachmentId - Delete attachment from task
+router.delete('/delete-attachment/:attachmentId', async (req, res) => {
+  const { pool } = require('../config/database');
+  const client = await pool.connect();
+
+  try {
+    const { attachmentId } = req.params;
+
+    console.log('🗑️ Deleting attachment:', attachmentId);
+
+    // Get attachment info before deleting
+    const attachmentResult = await client.query(
+      'SELECT * FROM attachments WHERE id = $1',
+      [attachmentId]
+    );
+
+    if (attachmentResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Anexo não encontrado' });
+    }
+
+    const attachment = attachmentResult.rows[0];
+
+    // Delete from database
+    await client.query('DELETE FROM attachments WHERE id = $1', [attachmentId]);
+
+    console.log('✅ Attachment deleted from database');
+
+    // Emit WebSocket event
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('task:attachment-deleted', {
+        taskId: attachment.task_id,
+        attachmentId
+      });
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('❌ Delete attachment error:', error);
+    res.status(500).json({
+      error: 'Erro ao deletar anexo',
+      details: error.message
+    });
+  } finally {
+    client.release();
+  }
+});
+
 module.exports = router;

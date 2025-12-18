@@ -93,10 +93,22 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
       }
     };
 
+    const handleAttachmentDeleted = (data: { taskId: string; attachmentId: string }) => {
+      // Only update if this is the current task
+      if (data.taskId === initialTask.id) {
+        setFormData(prev => ({
+          ...prev,
+          attachments: (prev.attachments || []).filter(a => a.id !== data.attachmentId)
+        }));
+      }
+    };
+
     socket.on('task:attachment-added', handleAttachmentAdded);
+    socket.on('task:attachment-deleted', handleAttachmentDeleted);
 
     return () => {
       socket.off('task:attachment-added', handleAttachmentAdded);
+      socket.off('task:attachment-deleted', handleAttachmentDeleted);
     };
   }, [socket, initialTask?.id]);
 
@@ -285,8 +297,21 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
     }
   };
 
-  const removeAttachment = (attId: string) => {
-    setFormData({ ...formData, attachments: (formData.attachments || []).filter(a => a.id !== attId) });
+  const removeAttachment = async (attId: string) => {
+    if (!confirm('Tem certeza que deseja remover este anexo?')) return;
+
+    try {
+      // Call API to delete attachment
+      await assetsAPI.deleteAttachment(attId);
+
+      // Update local state
+      setFormData({ ...formData, attachments: (formData.attachments || []).filter(a => a.id !== attId) });
+
+      console.log('✅ Attachment deleted successfully');
+    } catch (error) {
+      console.error('❌ Error deleting attachment:', error);
+      alert('Erro ao deletar anexo. Tente novamente.');
+    }
   };
 
   return (

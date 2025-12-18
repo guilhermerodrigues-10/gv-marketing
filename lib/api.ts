@@ -184,6 +184,11 @@ export const assetsAPI = {
     });
     return response.data;
   },
+
+  deleteAttachment: async (attachmentId: string) => {
+    const response = await api.delete(`/assets/delete-attachment/${attachmentId}`);
+    return response.data;
+  },
 };
 
 // ==================== NOTIFICATIONS ====================
