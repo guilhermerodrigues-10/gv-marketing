@@ -4,7 +4,7 @@ import { Button } from '../components/ui/Button';
 import { Asset, AssetType } from '../types';
 import {
   Upload, Image as ImageIcon, Video, FileText, File,
-  Trash2, Download, Search, Filter, Tag, X, AlertCircle
+  Trash2, Download, Search, Filter, Tag, X, AlertCircle, Folder, FolderOpen
 } from 'lucide-react';
 import {
   isDropboxConfigured,
@@ -155,7 +155,8 @@ export const AssetsPage: React.FC = () => {
   const filteredAssets = assets.filter((asset: Asset) => {
     const matchesSearch = asset.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = filterType === 'all' || asset.type === filterType;
-    const matchesProject = filterProject === 'all' || asset.projectId === filterProject;
+    const matchesProject = filterProject === 'all' ||
+                          (filterProject === 'none' ? !asset.projectId : asset.projectId === filterProject);
     return matchesSearch && matchesType && matchesProject;
   });
 
@@ -259,50 +260,99 @@ export const AssetsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
-            <input
-              type="text"
-              placeholder="Buscar arquivos..."
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-            />
+      {/* Main Content with Sidebar */}
+      <div className="flex gap-6 flex-1 overflow-hidden">
+        {/* Sidebar - Folders */}
+        <div className="w-64 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 overflow-y-auto">
+          <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">Pastas</h3>
+
+          {/* All Files */}
+          <button
+            onClick={() => setFilterProject('all')}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors mb-1 ${
+              filterProject === 'all'
+                ? 'bg-primary-500 text-white'
+                : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+            }`}
+          >
+            {filterProject === 'all' ? <FolderOpen size={18} /> : <Folder size={18} />}
+            <span>Todos os Arquivos</span>
+            <span className="ml-auto text-xs opacity-70">{assets.length}</span>
+          </button>
+
+          <div className="h-px bg-slate-200 dark:bg-slate-700 my-3"></div>
+
+          {/* Project Folders */}
+          {projects.map(project => {
+            const projectAssets = assets.filter(a => a.projectId === project.id);
+            return (
+              <button
+                key={project.id}
+                onClick={() => setFilterProject(project.id)}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors mb-1 ${
+                  filterProject === project.id
+                    ? 'bg-primary-500 text-white'
+                    : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+                }`}
+              >
+                {filterProject === project.id ? <FolderOpen size={18} /> : <Folder size={18} />}
+                <span className="truncate flex-1 text-left">{project.name}</span>
+                <span className="text-xs opacity-70">{projectAssets.length}</span>
+              </button>
+            );
+          })}
+
+          <div className="h-px bg-slate-200 dark:bg-slate-700 my-3"></div>
+
+          {/* Uncategorized */}
+          <button
+            onClick={() => setFilterProject('none')}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+              filterProject === 'none'
+                ? 'bg-primary-500 text-white'
+                : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+            }`}
+          >
+            {filterProject === 'none' ? <FolderOpen size={18} /> : <Folder size={18} />}
+            <span>Sem Pasta</span>
+            <span className="ml-auto text-xs opacity-70">{assets.filter(a => !a.projectId).length}</span>
+          </button>
+        </div>
+
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Search and Type Filter */}
+          <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Search */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
+                <input
+                  type="text"
+                  placeholder="Buscar arquivos..."
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+
+              {/* Type Filter */}
+              <select
+                value={filterType}
+                onChange={e => setFilterType(e.target.value as any)}
+                className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                <option value="all">Todos os Tipos</option>
+                <option value={AssetType.IMAGE}>Imagens</option>
+                <option value={AssetType.VIDEO}>Vídeos</option>
+                <option value={AssetType.DOCUMENT}>Documentos</option>
+                <option value={AssetType.OTHER}>Outros</option>
+              </select>
+            </div>
           </div>
 
-          {/* Type Filter */}
-          <select
-            value={filterType}
-            onChange={e => setFilterType(e.target.value as any)}
-            className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-          >
-            <option value="all">Todos os Tipos</option>
-            <option value={AssetType.IMAGE}>Imagens</option>
-            <option value={AssetType.VIDEO}>Vídeos</option>
-            <option value={AssetType.DOCUMENT}>Documentos</option>
-            <option value={AssetType.OTHER}>Outros</option>
-          </select>
-
-          {/* Project Filter */}
-          <select
-            value={filterProject}
-            onChange={e => setFilterProject(e.target.value)}
-            className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-          >
-            <option value="all">Todos os Projetos</option>
-            {projects.map(project => (
-              <option key={project.id} value={project.id}>{project.name}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* Assets Grid */}
-      <div className="flex-1 overflow-auto">
+          {/* Assets Grid */}
+          <div className="flex-1 overflow-auto">
         {filteredAssets.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-slate-400">
             <Upload size={48} className="mb-4 opacity-50" />
