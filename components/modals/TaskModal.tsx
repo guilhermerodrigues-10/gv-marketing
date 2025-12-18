@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Upload, File as FileIcon, Trash2, Check, Clock, Download } from 'lucide-react';
+import { X, Upload, File as FileIcon, Trash2, Check, Clock, Download, Eye } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
 import { Task, Priority, Attachment } from '../../types';
 import { Button } from '../ui/Button';
@@ -418,22 +418,36 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
                  />
                  <div className="flex flex-wrap gap-2">
                     {formData.attachments?.map(att => (
-                       <div key={att.id} className="flex items-center p-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-sm border border-slate-200 dark:border-slate-700">
-                          <FileIcon size={14} className="mr-2 text-primary-500" />
-                          <span className="truncate max-w-[150px] mr-2 dark:text-white">{att.name}</span>
-                          <a
-                             href={att.url}
-                             download={att.name}
-                             target="_blank"
-                             rel="noopener noreferrer"
-                             className="text-slate-400 hover:text-primary-500 mr-2"
-                             title="Download"
-                          >
-                             <Download size={14} />
-                          </a>
-                          <button type="button" onClick={() => removeAttachment(att.id)} className="text-slate-400 hover:text-red-500">
-                             <Trash2 size={14} />
-                          </button>
+                       <div key={att.id} className="flex items-center gap-2 p-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-sm border border-slate-200 dark:border-slate-700">
+                          <FileIcon size={16} className="text-primary-500 flex-shrink-0" />
+                          <span className="truncate max-w-[150px] dark:text-white">{att.name}</span>
+                          <div className="flex items-center gap-1 ml-auto">
+                             <a
+                                href={att.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-1 text-slate-400 hover:text-blue-500 hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors"
+                                title="Ver arquivo"
+                             >
+                                <Eye size={16} />
+                             </a>
+                             <a
+                                href={att.url}
+                                download={att.name}
+                                className="p-1 text-slate-400 hover:text-green-500 hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors"
+                                title="Baixar arquivo"
+                             >
+                                <Download size={16} />
+                             </a>
+                             <button
+                                type="button"
+                                onClick={() => removeAttachment(att.id)}
+                                className="p-1 text-slate-400 hover:text-red-500 hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors"
+                                title="Remover anexo"
+                             >
+                                <Trash2 size={16} />
+                             </button>
+                          </div>
                        </div>
                     ))}
                     <button 
