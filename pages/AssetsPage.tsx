@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../contexts/AppContext';
 import { Button } from '../components/ui/Button';
 import { Asset, AssetType } from '../types';
 import {
   Upload, Image as ImageIcon, Video, FileText, File,
-  Trash2, Download, Search, Filter, Tag, X, AlertCircle, Folder, FolderOpen
+  Trash2, Download, Search, Filter, Tag, X, AlertCircle, Folder, FolderOpen, Plus
 } from 'lucide-react';
 import {
   isDropboxConfigured,
@@ -13,17 +13,21 @@ import {
   formatFileSize,
   getAssetTypeFromMimeType
 } from '../lib/dropbox';
+import { useSocket } from '../lib/useSocket';
 
 const ASSETS_STORAGE_KEY = 'gv-marketing-assets';
 
 export const AssetsPage: React.FC = () => {
-  const { user, projects } = useApp();
+  const { user, projects, addProject } = useApp();
+  const socket = useSocket();
   const [assets, setAssets] = useState<Asset[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<AssetType | 'all'>('all');
   const [filterProject, setFilterProject] = useState<string>('all');
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
+  const [showCreateFolder, setShowCreateFolder] = useState(false);
+  const [newFolderName, setNewFolderName] = useState('');
 
   // Load assets from localStorage on mount
   React.useEffect(() => {
@@ -51,6 +55,34 @@ export const AssetsPage: React.FC = () => {
       localStorage.setItem(ASSETS_STORAGE_KEY, JSON.stringify(assets));
     }
   }, [assets]);
+
+  // WebSocket listener for real-time asset updates
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleAssetUploaded = (data: { asset: Asset }) => {
+      console.log('🔔 Asset uploaded event received:', data.asset.name);
+      setAssets(prev => {
+        // Check if asset already exists
+        const exists = prev.some(a => a.id === data.asset.id);
+        if (exists) return prev;
+        return [data.asset, ...prev];
+      });
+    };
+
+    const handleAssetDeleted = (data: { id: string }) => {
+      console.log('🔔 Asset deleted event received:', data.id);
+      setAssets(prev => prev.filter(a => a.id !== data.id));
+    };
+
+    socket.on('asset:uploaded', handleAssetUploaded);
+    socket.on('asset:deleted', handleAssetDeleted);
+
+    return () => {
+      socket.off('asset:uploaded', handleAssetUploaded);
+      socket.off('asset:deleted', handleAssetDeleted);
+    };
+  }, [socket]);
 
   // Handle file upload
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -96,12 +128,18 @@ export const AssetsPage: React.FC = () => {
             type: getAssetTypeFromMimeType((file as File).type) as AssetType,
             mimeType: (file as File).type,
             size: (file as File).size,
-            projectId: filterProject !== 'all' ? filterProject : undefined,
+            projectId: filterProject !== 'all' && filterProject !== 'none' ? filterProject : undefined,
             tags: [],
             uploadedBy: user.id,
             uploadedAt: new Date().toISOString()
           };
           setAssets((prev: Asset[]) => [newAsset, ...prev]);
+
+          // Emit WebSocket event for real-time updates
+          if (socket) {
+            socket.emit('asset:uploaded', { asset: newAsset });
+          }
+
           successCount++;
         } else {
           console.error('❌ Upload failed (no result):', (file as File).name);
@@ -134,6 +172,11 @@ export const AssetsPage: React.FC = () => {
       const updatedAssets = assets.filter((a: Asset) => a.id !== asset.id);
       setAssets(updatedAssets);
 
+      // Emit WebSocket event for real-time updates
+      if (socket) {
+        socket.emit('asset:deleted', { id: asset.id });
+      }
+
       // Update localStorage
       if (updatedAssets.length === 0) {
         localStorage.removeItem(ASSETS_STORAGE_KEY);
@@ -148,6 +191,31 @@ export const AssetsPage: React.FC = () => {
       }
     } else {
       alert('Falha ao excluir arquivo');
+    }
+  };
+
+  // Handle folder creation
+  const handleCreateFolder = async () => {
+    if (!newFolderName.trim()) {
+      alert('Digite um nome para a pasta');
+      return;
+    }
+
+    // Create a new project (folder)
+    const newProject = await addProject({
+      name: newFolderName.trim(),
+      description: '',
+      status: 'active',
+      priority: 'medium',
+      clientName: '',
+      startDate: new Date().toISOString().split('T')[0],
+      teamMembers: user ? [user.id] : []
+    });
+
+    if (newProject) {
+      setNewFolderName('');
+      setShowCreateFolder(false);
+      setFilterProject(newProject.id);
     }
   };
 
@@ -264,7 +332,16 @@ export const AssetsPage: React.FC = () => {
       <div className="flex gap-6 flex-1 overflow-hidden">
         {/* Sidebar - Folders */}
         <div className="w-64 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 overflow-y-auto">
-          <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">Pastas</h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Pastas</h3>
+            <button
+              onClick={() => setShowCreateFolder(true)}
+              className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-primary-500 transition-colors"
+              title="Criar Pasta"
+            >
+              <Plus size={18} />
+            </button>
+          </div>
 
           {/* All Files */}
           <button
@@ -489,6 +566,51 @@ export const AssetsPage: React.FC = () => {
                   Excluir
                 </Button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Folder Modal */}
+      {showCreateFolder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={() => setShowCreateFolder(false)}>
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-md" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center p-6 border-b border-slate-200 dark:border-slate-800">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Criar Nova Pasta</h2>
+              <button onClick={() => setShowCreateFolder(false)} className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="p-6">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                Nome da Pasta
+              </label>
+              <input
+                type="text"
+                value={newFolderName}
+                onChange={e => setNewFolderName(e.target.value)}
+                onKeyPress={e => e.key === 'Enter' && handleCreateFolder()}
+                placeholder="Digite o nome da pasta..."
+                className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                autoFocus
+              />
+            </div>
+
+            <div className="flex gap-3 p-6 border-t border-slate-200 dark:border-slate-800">
+              <Button
+                onClick={() => setShowCreateFolder(false)}
+                variant="secondary"
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleCreateFolder}
+                className="flex-1"
+              >
+                Criar Pasta
+              </Button>
             </div>
           </div>
         </div>
