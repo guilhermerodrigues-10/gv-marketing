@@ -2,10 +2,22 @@ const express = require('express');
 const { Dropbox } = require('dropbox');
 const router = express.Router();
 
-// Criar cliente Dropbox
-const dropboxClient = process.env.DROPBOX_ACCESS_TOKEN
-  ? new Dropbox({ accessToken: process.env.DROPBOX_ACCESS_TOKEN })
-  : null;
+// Criar cliente Dropbox com refresh token
+let dropboxClient = null;
+
+if (process.env.DROPBOX_REFRESH_TOKEN && process.env.DROPBOX_APP_KEY && process.env.DROPBOX_APP_SECRET) {
+  dropboxClient = new Dropbox({
+    refreshToken: process.env.DROPBOX_REFRESH_TOKEN,
+    clientId: process.env.DROPBOX_APP_KEY,
+    clientSecret: process.env.DROPBOX_APP_SECRET
+  });
+  console.log('✅ Dropbox configured with refresh token');
+} else if (process.env.DROPBOX_ACCESS_TOKEN) {
+  dropboxClient = new Dropbox({ accessToken: process.env.DROPBOX_ACCESS_TOKEN });
+  console.log('✅ Dropbox configured with access token');
+} else {
+  console.log('⚠️ Dropbox not configured');
+}
 
 // Middleware para verificar se Dropbox está configurado
 const requireDropbox = (req, res, next) => {
