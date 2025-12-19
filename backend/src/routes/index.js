@@ -114,6 +114,55 @@ router.delete('/users/:id', authMiddleware, checkRole('Admin', 'Gerente'), async
   }
 });
 
+// POST /api/users/change-password - Change user password
+router.post('/users/change-password', authMiddleware, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.user.id;
+
+    // Validate input
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Senha atual e nova senha são obrigatórias' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'A nova senha deve ter pelo menos 6 caracteres' });
+    }
+
+    // Get user with password hash
+    const userResult = await pool.query(
+      'SELECT id, password_hash FROM users WHERE id = $1',
+      [userId]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    const user = userResult.rows[0];
+
+    // Verify current password
+    const isPasswordValid = await bcrypt.compare(currentPassword, user.password_hash);
+    if (!isPasswordValid) {
+      return res.status(401).json({ error: 'Senha atual incorreta' });
+    }
+
+    // Hash new password
+    const newPasswordHash = await bcrypt.hash(newPassword, 10);
+
+    // Update password
+    await pool.query(
+      'UPDATE users SET password_hash = $1 WHERE id = $2',
+      [newPasswordHash, userId]
+    );
+
+    res.json({ message: 'Senha alterada com sucesso' });
+  } catch (error) {
+    console.error('Change password error:', error);
+    res.status(500).json({ error: 'Erro ao alterar senha' });
+  }
+});
+
 // ==================== PROJECTS ROUTES ====================
 
 // GET /api/projects - Get all projects
@@ -189,7 +238,7 @@ router.put('/projects/:id', authMiddleware, checkRole('Admin', 'Gerente'), async
 
     const result = await client.query(
       'UPDATE projects SET name = $1, client_name = $2, budget = $3, color = $4 WHERE id = $5 RETURNING *',
-      [name, clientName, budget, color, req.params.id]
+      [name, clientName, budget || 0, color, req.params.id]
     );
 
     if (result.rows.length === 0) {
