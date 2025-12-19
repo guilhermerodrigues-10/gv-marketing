@@ -38,7 +38,7 @@ export const SettingsPage: React.FC = () => {
     }
   };
 
-  const handleChangePassword = () => {
+  const handleChangePassword = async () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       alert('As senhas não coincidem!');
       return;
@@ -49,13 +49,35 @@ export const SettingsPage: React.FC = () => {
       return;
     }
 
-    // Simulate password change
-    alert('Senha alterada com sucesso!\n\nNota: Este é um app demo. Em produção, a senha seria atualizada no banco de dados e um email de confirmação seria enviado.');
-    setPasswordData({
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: ''
-    });
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/users/change-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Erro ao alterar senha');
+      }
+
+      alert('Senha alterada com sucesso!');
+      setPasswordData({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      });
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Erro ao alterar senha');
+    }
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {

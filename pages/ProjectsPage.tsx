@@ -4,7 +4,7 @@ import { useApp } from '../contexts/AppContext';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Project } from '../types';
-import { Plus, Edit2, Trash2, Folder, DollarSign, Briefcase, Layout, Lock } from 'lucide-react';
+import { Plus, Edit2, Trash2, Folder, Briefcase, Layout, Lock } from 'lucide-react';
 
 export const ProjectsPage: React.FC = () => {
   const { projects, addProject, updateProject, deleteProject, user } = useApp();
@@ -14,7 +14,6 @@ export const ProjectsPage: React.FC = () => {
   const [formData, setFormData] = useState({
     name: '',
     clientName: '',
-    budget: 0,
     color: 'bg-blue-500'
   });
 
@@ -27,11 +26,10 @@ export const ProjectsPage: React.FC = () => {
       setFormData({
         name: project.name,
         clientName: project.clientName,
-        budget: project.budget,
         color: project.color
       });
     } else {
-      setFormData({ name: '', clientName: '', budget: 0, color: 'bg-blue-500' });
+      setFormData({ name: '', clientName: '', color: 'bg-blue-500' });
     }
     setIsModalOpen(true);
   };
@@ -97,11 +95,6 @@ export const ProjectsPage: React.FC = () => {
 
             <div className="border-t border-slate-100 dark:border-slate-700 pt-4 mt-auto">
                <div className="flex items-center justify-between mb-4">
-                 <div className="flex items-center text-sm text-slate-600 dark:text-slate-400">
-                    <DollarSign size={14} className="mr-1 text-green-500" />
-                    {/* Hide budget details for guests/members if strictly required, but usually members need to know scale */}
-                    <span className="font-semibold">${project.budget.toLocaleString()}</span>
-                 </div>
                  <div className="flex -space-x-2">
                     {project.members && project.members.slice(0, 3).map((mid, i) => (
                       <div key={i} className="w-6 h-6 rounded-full bg-slate-200 border border-white dark:border-slate-800 overflow-hidden">
@@ -110,7 +103,7 @@ export const ProjectsPage: React.FC = () => {
                     ))}
                  </div>
                </div>
-               
+
                <Link to={`/projects/${project.id}`}>
                  <Button variant="outline" className="w-full">
                     <Layout size={16} className="mr-2" />
@@ -137,18 +130,11 @@ export const ProjectsPage: React.FC = () => {
                 onChange={e => setFormData({...formData, name: e.target.value})} 
                 required 
               />
-              <Input 
-                label="Cliente" 
-                value={formData.clientName} 
-                onChange={e => setFormData({...formData, clientName: e.target.value})} 
-                required 
-              />
-              <Input 
-                label="Orçamento ($)" 
-                type="number"
-                value={formData.budget} 
-                onChange={e => setFormData({...formData, budget: Number(e.target.value)})} 
-                required 
+              <Input
+                label="Cliente"
+                value={formData.clientName}
+                onChange={e => setFormData({...formData, clientName: e.target.value})}
+                required
               />
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Cor</label>
