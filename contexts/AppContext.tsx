@@ -164,12 +164,33 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     loadData();
   }, []);
 
-  // Simulate time tracking interval
+  // Automatic time tracking interval - updates every second and persists every 10 seconds
   useEffect(() => {
-    const interval = setInterval(() => {
-      setTasks(prev => prev.map(t =>
-        t.isTracking ? { ...t, timeTracked: t.timeTracked + 1 } : t
-      ));
+    let updateCounter = 0;
+    const interval = setInterval(async () => {
+      updateCounter++;
+
+      setTasks(prev => {
+        const updated = prev.map(t =>
+          t.isTracking ? { ...t, timeTracked: t.timeTracked + 1 } : t
+        );
+
+        // Every 10 seconds, persist to backend
+        if (updateCounter >= 10) {
+          updateCounter = 0;
+          updated.forEach(async (task) => {
+            if (task.isTracking) {
+              try {
+                await taskAPI.update(task.id, { timeTracked: task.timeTracked });
+              } catch (error) {
+                console.error('Failed to persist time tracking:', error);
+              }
+            }
+          });
+        }
+
+        return updated;
+      });
     }, 1000);
     return () => clearInterval(interval);
   }, []);

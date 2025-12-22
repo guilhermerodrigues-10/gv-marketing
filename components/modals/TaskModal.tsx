@@ -59,6 +59,9 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
       const s = totalSeconds % 60;
       setTimeSpent({ hours: h, minutes: m, seconds: s });
 
+      // Restore timer running state
+      setIsTimerRunning(initialTask.isTracking || false);
+
     } else {
       // CREATE MODE (with possible presets)
       setFormData({
@@ -171,7 +174,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
     const totalSeconds = (Number(timeSpent.hours) * 3600) + (Number(timeSpent.minutes) * 60) + Number(timeSpent.seconds);
 
     if (initialTask?.id) {
-      // UPDATE: include all fields including timeTracked
+      // UPDATE: include all fields including timeTracked and isTracking
       const updateData = {
         title: formData.title,
         description: formData.description || '',
@@ -182,7 +185,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
         assignees: formData.assignees || [],
         subtasks: formData.subtasks || [],
         tags: formData.tags || [],
-        timeTracked: totalSeconds
+        timeTracked: totalSeconds,
+        isTracking: isTimerRunning
       };
       await updateTask(initialTask.id, updateData);
     } else {
