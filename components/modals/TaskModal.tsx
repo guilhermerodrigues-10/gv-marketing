@@ -214,30 +214,35 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
         // Upload pending files after task creation with the task ID
         if (pendingFiles.length > 0) {
           console.log(`📤 Uploading ${pendingFiles.length} pending files to task ${newTaskId}...`);
+          setIsUploading(true);
 
-          for (const file of pendingFiles) {
-            try {
-              const reader = new FileReader();
-              const base64Content = await new Promise<string>((resolve, reject) => {
-                reader.onload = () => {
-                  const base64String = reader.result as string;
-                  resolve(base64String.split(',')[1]);
-                };
-                reader.onerror = () => reject(new Error('Failed to read file'));
-                reader.readAsDataURL(file);
-              });
+          try {
+            for (const file of pendingFiles) {
+              try {
+                const reader = new FileReader();
+                const base64Content = await new Promise<string>((resolve, reject) => {
+                  reader.onload = () => {
+                    const base64String = reader.result as string;
+                    resolve(base64String.split(',')[1]);
+                  };
+                  reader.onerror = () => reject(new Error('Failed to read file'));
+                  reader.readAsDataURL(file);
+                });
 
-              await assetsAPI.uploadTaskAttachment(
-                file.name,
-                base64Content,
-                formData.projectId!,
-                newTaskId, // Now we have the task ID!
-                user?.id || ''
-              );
-              console.log(`✅ Uploaded: ${file.name} to task ${newTaskId}`);
-            } catch (error) {
-              console.error(`❌ Failed to upload ${file.name}:`, error);
+                await assetsAPI.uploadTaskAttachment(
+                  file.name,
+                  base64Content,
+                  formData.projectId!,
+                  newTaskId, // Now we have the task ID!
+                  user?.id || ''
+                );
+                console.log(`✅ Uploaded: ${file.name} to task ${newTaskId}`);
+              } catch (error) {
+                console.error(`❌ Failed to upload ${file.name}:`, error);
+              }
             }
+          } finally {
+            setIsUploading(false);
           }
         }
       } catch (error) {
