@@ -64,6 +64,10 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
 
     } else {
       // CREATE MODE (with possible presets)
+      const presets = initialTask ? { ...initialTask } : {};
+      // Force assignees to be empty for new tasks - user must select explicitly
+      delete presets.assignees;
+
       setFormData({
         title: '',
         description: '',
@@ -77,7 +81,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
         dueDate: '',
         tags: [],
         subtasks: [],
-        ...initialTask // Apply any other presets passed
+        ...presets // Apply any other presets passed (except assignees)
       });
       setTimeSpent({ hours: 0, minutes: 0, seconds: 0 });
     }
