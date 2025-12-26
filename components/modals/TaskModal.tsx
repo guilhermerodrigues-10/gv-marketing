@@ -189,6 +189,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
         isTracking: isTimerRunning
       };
       await updateTask(initialTask.id, updateData);
+      onClose();
     } else {
       // CREATE: exclude timeTracked (will be 0 by default)
       const createData = {
@@ -239,18 +240,21 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
                 console.log(`✅ Uploaded: ${file.name} to task ${newTaskId}`);
               } catch (error) {
                 console.error(`❌ Failed to upload ${file.name}:`, error);
+                alert(`Erro ao fazer upload de ${file.name}`);
               }
             }
           } finally {
             setIsUploading(false);
           }
         }
+
+        // Only close modal after everything is done
+        onClose();
       } catch (error) {
         console.error('Failed to create task:', error);
         return; // Don't close modal if task creation failed
       }
     }
-    onClose();
   };
 
   const handleDelete = async () => {
