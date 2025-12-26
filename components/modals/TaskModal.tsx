@@ -204,6 +204,9 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
       };
 
       try {
+        console.log('📋 Creating task with data:', createData);
+        console.log('📍 Task status:', createData.status);
+
         // Create task and get the ID
         const newTaskId = await addTask(createData);
         console.log('✅ Task created with ID:', newTaskId);
