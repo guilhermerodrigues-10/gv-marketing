@@ -14,7 +14,7 @@ interface TaskModalProps {
 }
 
 export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTask }) => {
-  const { addTask, updateTask, deleteTask, projects, users, columns, user } = useApp();
+  const { addTask, updateTask, deleteTask, projects, users, columns, user, refreshData } = useApp();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const socket = useSocket();
 
@@ -247,6 +247,9 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
             setIsUploading(false);
           }
         }
+
+        // Refresh data to show the new task immediately
+        await refreshData();
 
         // Only close modal after everything is done
         onClose();
