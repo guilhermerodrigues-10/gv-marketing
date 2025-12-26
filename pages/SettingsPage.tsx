@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '../contexts/AppContext';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import { Bell, Lock, User, Monitor, Save } from 'lucide-react';
+import { Bell, Lock, User, Monitor, Save, Loader2 } from 'lucide-react';
+import { assetsAPI } from '../lib/api';
 
 export const SettingsPage: React.FC = () => {
   const { user, isDarkMode, toggleTheme, updateUser } = useApp();
@@ -20,6 +21,9 @@ export const SettingsPage: React.FC = () => {
     newPassword: '',
     confirmPassword: ''
   });
+
+  // Loading state for avatar upload
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -80,14 +84,43 @@ export const SettingsPage: React.FC = () => {
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
+    if (!file) return;
+
+    setIsUploadingAvatar(true);
+
+    try {
+      // Convert file to base64
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData({...formData, avatarUrl: reader.result as string});
-      };
-      reader.readAsDataURL(file);
+      const base64Content = await new Promise<string>((resolve, reject) => {
+        reader.onload = () => {
+          const base64String = reader.result as string;
+          resolve(base64String.split(',')[1]);
+        };
+        reader.onerror = () => reject(new Error('Failed to read file'));
+        reader.readAsDataURL(file);
+      });
+
+      // Upload to Dropbox via assets API
+      const response = await assetsAPI.uploadTaskAttachment(
+        file.name,
+        base64Content,
+        'avatars', // Use 'avatars' as project folder
+        undefined, // No task ID
+        user?.id || ''
+      );
+
+      if (response.success && response.asset) {
+        // Update form data with the Dropbox URL
+        setFormData({...formData, avatarUrl: response.asset.url});
+        alert('Foto carregada! Clique em "Salvar Alterações" para confirmar.');
+      }
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      alert('Erro ao fazer upload da foto. Tente novamente.');
+    } finally {
+      setIsUploadingAvatar(false);
     }
   };
 
@@ -112,8 +145,10 @@ export const SettingsPage: React.FC = () => {
                    onChange={handleFileUpload}
                    className="hidden"
                  />
-                 <div className="w-24 h-24 rounded-full border-4 border-primary-100 dark:border-primary-900 overflow-hidden flex items-center justify-center bg-primary-100 dark:bg-primary-900">
-                   {formData.avatarUrl ? (
+                 <div className="w-24 h-24 rounded-full border-4 border-primary-100 dark:border-primary-900 overflow-hidden flex items-center justify-center bg-primary-100 dark:bg-primary-900 relative">
+                   {isUploadingAvatar ? (
+                     <Loader2 size={32} className="text-primary-600 dark:text-primary-400 animate-spin" />
+                   ) : formData.avatarUrl ? (
                      <img
                        src={formData.avatarUrl}
                        alt="Avatar"
@@ -125,9 +160,11 @@ export const SettingsPage: React.FC = () => {
                      </span>
                    )}
                  </div>
-                 <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                   <span className="text-white text-xs font-medium">Alterar</span>
-                 </div>
+                 {!isUploadingAvatar && (
+                   <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                     <span className="text-white text-xs font-medium">Alterar</span>
+                   </div>
+                 )}
                </label>
                <div className="flex-1 w-full">
                  <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Foto de Perfil</p>
