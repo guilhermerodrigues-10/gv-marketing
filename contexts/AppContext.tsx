@@ -25,7 +25,7 @@ interface AppContextType extends AppState {
   toggleSidebar: () => void;
   
   // Task Actions
-  addTask: (task: Omit<Task, 'id' | 'createdAt' | 'timeTracked' | 'isTracking' | 'attachments'>) => Promise<void>;
+  addTask: (task: Omit<Task, 'id' | 'createdAt' | 'timeTracked' | 'isTracking' | 'attachments'>) => Promise<string>;
   updateTask: (taskId: string, updates: Partial<Task>) => Promise<void>;
   deleteTask: (taskId: string) => Promise<void>;
   moveTask: (taskId: string, newStatus: string) => Promise<void>;
