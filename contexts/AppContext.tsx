@@ -200,72 +200,82 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (!socket) return;
 
     // Task events
-    socket.on('task:created', async () => {
+    const handleTaskCreated = async () => {
       console.log('🔔 New task created, refreshing...');
       const tasksData = await taskAPI.getAll();
       setTasks(tasksData);
-    });
+    };
 
-    socket.on('task:updated', async () => {
+    const handleTaskUpdated = async () => {
       console.log('🔔 Task updated, refreshing...');
       const tasksData = await taskAPI.getAll();
       setTasks(tasksData);
-    });
+    };
 
-    socket.on('task:deleted', async () => {
+    const handleTaskDeleted = async () => {
       console.log('🔔 Task deleted, refreshing...');
       const tasksData = await taskAPI.getAll();
       setTasks(tasksData);
-    });
+    };
 
     // Project events
-    socket.on('project:created', async () => {
+    const handleProjectCreated = async () => {
       console.log('🔔 New project created, refreshing...');
       const projectsData = await projectAPI.getAll();
       setProjects(projectsData);
-    });
+    };
 
-    socket.on('project:updated', async () => {
+    const handleProjectUpdated = async () => {
       console.log('🔔 Project updated, refreshing...');
       const projectsData = await projectAPI.getAll();
       setProjects(projectsData);
-    });
+    };
 
-    socket.on('project:deleted', async () => {
+    const handleProjectDeleted = async () => {
       console.log('🔔 Project deleted, refreshing...');
       const projectsData = await projectAPI.getAll();
       setProjects(projectsData);
-    });
+    };
 
     // User events
-    socket.on('user:created', async () => {
+    const handleUserCreated = async () => {
       console.log('🔔 New user created, refreshing...');
       const usersData = await userAPI.getAll();
       setUsers(usersData);
-    });
+    };
 
-    socket.on('user:updated', async () => {
+    const handleUserUpdated = async () => {
       console.log('🔔 User updated, refreshing...');
       const usersData = await userAPI.getAll();
       setUsers(usersData);
-    });
+    };
 
-    socket.on('user:deleted', async () => {
+    const handleUserDeleted = async () => {
       console.log('🔔 User deleted, refreshing...');
       const usersData = await userAPI.getAll();
       setUsers(usersData);
-    });
+    };
+
+    socket.on('task:created', handleTaskCreated);
+    socket.on('task:updated', handleTaskUpdated);
+    socket.on('task:deleted', handleTaskDeleted);
+    socket.on('project:created', handleProjectCreated);
+    socket.on('project:updated', handleProjectUpdated);
+    socket.on('project:deleted', handleProjectDeleted);
+    socket.on('user:created', handleUserCreated);
+    socket.on('user:updated', handleUserUpdated);
+    socket.on('user:deleted', handleUserDeleted);
 
     return () => {
-      socket.off('task:created');
-      socket.off('task:updated');
-      socket.off('task:deleted');
-      socket.off('project:created');
-      socket.off('project:updated');
-      socket.off('project:deleted');
-      socket.off('user:created');
-      socket.off('user:updated');
-      socket.off('user:deleted');
+      socket.off('task:created', handleTaskCreated);
+      socket.off('task:updated', handleTaskUpdated);
+      socket.off('task:deleted', handleTaskDeleted);
+      socket.off('project:created', handleProjectCreated);
+      socket.off('project:updated', handleProjectUpdated);
+      socket.off('project:deleted', handleProjectDeleted);
+      socket.off('user:created', handleUserCreated);
+      socket.off('user:updated', handleUserUpdated);
+      socket.off('user:deleted', handleUserDeleted);
     };
   }, [socket]);
 
@@ -322,11 +332,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const createdTask = await taskAPI.create(newTaskData);
       console.log('✅ Tarefa criada no Supabase:', createdTask);
 
-      // Recarregar lista
-      console.log('🔄 Recarregando lista de tarefas...');
-      const updatedTasks = await taskAPI.getAll();
-      console.log('📋 Total de tarefas após reload:', updatedTasks.length);
-      setTasks(updatedTasks);
+      // WebSocket will handle the refresh automatically via 'task:created' event
+      console.log('⏳ Aguardando WebSocket atualizar lista...');
 
       addNotification({ title: 'Nova Tarefa', message: `Tarefa "${newTaskData.title}" criada.`, type: 'info' });
     } catch (error) {
