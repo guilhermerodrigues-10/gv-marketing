@@ -202,40 +202,44 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
         subtasks: formData.subtasks || [],
         tags: formData.tags || []
       };
-      await addTask(createData);
 
-      // Upload pending files after task creation
-      if (pendingFiles.length > 0) {
-        console.log(`📤 Uploading ${pendingFiles.length} pending files...`);
+      try {
+        // Create task and get the ID
+        const newTaskId = await addTask(createData);
+        console.log('✅ Task created with ID:', newTaskId);
 
-        // We need to get the created task ID from the tasks list
-        // Since addTask reloads tasks, we can find the most recent one
-        // But this is not ideal - better to modify addTask to return the task
-        // For now, we'll upload files without taskId (they'll still go to assets)
-        for (const file of pendingFiles) {
-          try {
-            const reader = new FileReader();
-            const base64Content = await new Promise<string>((resolve, reject) => {
-              reader.onload = () => {
-                const base64String = reader.result as string;
-                resolve(base64String.split(',')[1]);
-              };
-              reader.onerror = () => reject(new Error('Failed to read file'));
-              reader.readAsDataURL(file);
-            });
+        // Upload pending files after task creation with the task ID
+        if (pendingFiles.length > 0) {
+          console.log(`📤 Uploading ${pendingFiles.length} pending files to task ${newTaskId}...`);
 
-            await assetsAPI.uploadTaskAttachment(
-              file.name,
-              base64Content,
-              formData.projectId!,
-              undefined, // No taskId yet - will only save to assets library
-              user?.id || ''
-            );
-            console.log(`✅ Uploaded: ${file.name}`);
-          } catch (error) {
-            console.error(`❌ Failed to upload ${file.name}:`, error);
+          for (const file of pendingFiles) {
+            try {
+              const reader = new FileReader();
+              const base64Content = await new Promise<string>((resolve, reject) => {
+                reader.onload = () => {
+                  const base64String = reader.result as string;
+                  resolve(base64String.split(',')[1]);
+                };
+                reader.onerror = () => reject(new Error('Failed to read file'));
+                reader.readAsDataURL(file);
+              });
+
+              await assetsAPI.uploadTaskAttachment(
+                file.name,
+                base64Content,
+                formData.projectId!,
+                newTaskId, // Now we have the task ID!
+                user?.id || ''
+              );
+              console.log(`✅ Uploaded: ${file.name} to task ${newTaskId}`);
+            } catch (error) {
+              console.error(`❌ Failed to upload ${file.name}:`, error);
+            }
           }
         }
+      } catch (error) {
+        console.error('Failed to create task:', error);
+        return; // Don't close modal if task creation failed
       }
     }
     onClose();

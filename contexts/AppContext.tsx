@@ -324,7 +324,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
   // --- Task Logic com Supabase ---
-  const addTask = async (newTaskData: Omit<Task, 'id' | 'createdAt' | 'timeTracked' | 'isTracking' | 'attachments'>) => {
+  const addTask = async (newTaskData: Omit<Task, 'id' | 'createdAt' | 'timeTracked' | 'isTracking' | 'attachments'>): Promise<string> => {
     try {
       console.log('🚀 Iniciando criação de tarefa:', newTaskData);
 
@@ -336,6 +336,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       console.log('⏳ Aguardando WebSocket atualizar lista...');
 
       addNotification({ title: 'Nova Tarefa', message: `Tarefa "${newTaskData.title}" criada.`, type: 'info' });
+
+      return createdTask.id;
     } catch (error) {
       console.error('❌ ERRO ao criar tarefa:', error);
       if (error instanceof Error) {
@@ -345,6 +347,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         console.error('📊 Erro detalhado:', JSON.stringify(error, null, 2));
       }
       addNotification({ title: 'Erro', message: 'Não foi possível criar a tarefa.', type: 'error' });
+      throw error; // Re-throw to allow caller to handle
     }
   };
 

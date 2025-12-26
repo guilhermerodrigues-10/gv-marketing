@@ -240,24 +240,27 @@ router.post('/upload-task-attachment', requireDropbox, async (req, res) => {
     console.log('✅ Asset saved to database:', asset.id);
 
     // Se tiver taskId, criar vínculo na tabela attachments
+    let attachmentId = null;
     if (taskId) {
-      await client.query(
+      const attachmentResult = await client.query(
         `INSERT INTO attachments (task_id, name, url, type)
-         VALUES ($1, $2, $3, $4)`,
+         VALUES ($1, $2, $3, $4)
+         RETURNING id`,
         [taskId, fileName, shareUrl, fileType]
       );
-      console.log('✅ Attachment linked to task:', taskId);
+      attachmentId = attachmentResult.rows[0].id;
+      console.log('✅ Attachment linked to task:', taskId, 'with ID:', attachmentId);
     }
 
     await client.query('COMMIT');
 
     // Emitir evento real-time se houver taskId
     const io = req.app.get('io');
-    if (io && taskId) {
+    if (io && taskId && attachmentId) {
       io.emit('task:attachment-added', {
         taskId,
         attachment: {
-          id: asset.id,
+          id: attachmentId,
           name: fileName,
           url: shareUrl,
           type: fileType
@@ -268,7 +271,7 @@ router.post('/upload-task-attachment', requireDropbox, async (req, res) => {
     res.json({
       success: true,
       asset: {
-        id: asset.id,
+        id: attachmentId || asset.id, // Use attachment ID if linked to task, otherwise asset ID
         name: fileName,
         url: shareUrl,
         path: uploadResult.result.path_display,
