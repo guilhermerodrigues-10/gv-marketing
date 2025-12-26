@@ -72,7 +72,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
         status: initialTask?.status || columns[0]?.id || 'backlog',
         // Use preset projectId if available, else default
         projectId: initialTask?.projectId || projects[0]?.id || '',
-        assignees: users.length > 0 ? [users[0].id] : [],
+        assignees: [], // Start with empty assignees - user must select
         attachments: [],
         dueDate: '',
         tags: [],
@@ -167,6 +167,11 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
     // Validate required fields
     if (!formData.title?.trim()) {
       alert('Por favor, preencha o título da tarefa');
+      return;
+    }
+
+    if (!formData.assignees || formData.assignees.length === 0) {
+      alert('Por favor, selecione pelo menos um responsável');
       return;
     }
 
