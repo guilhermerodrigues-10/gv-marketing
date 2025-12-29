@@ -199,8 +199,9 @@ export const ITDemandModal: React.FC<ITDemandModalProps> = ({ isOpen, onClose, d
   const isViewMode = !!demand && !canEdit;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
-      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-3xl my-8 border border-slate-200 dark:border-slate-800 max-h-[calc(100vh-4rem)] overflow-y-auto">
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm overflow-y-auto">
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-3xl my-8 border border-slate-200 dark:border-slate-800">
         <div className="flex justify-between items-center p-4 sm:p-6 border-b border-slate-200 dark:border-slate-800">
           <h2 className="text-xl font-bold text-slate-900 dark:text-white">
             {demand ? (isViewMode ? 'Detalhes da Demanda' : 'Editar Demanda TI') : 'Nova Demanda TI'}
@@ -471,6 +472,7 @@ export const ITDemandModal: React.FC<ITDemandModalProps> = ({ isOpen, onClose, d
             </div>
           </div>
         </form>
+        </div>
       </div>
     </div>
   );
