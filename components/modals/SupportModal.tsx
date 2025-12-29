@@ -50,15 +50,16 @@ export const SupportModal: React.FC<SupportModalProps> = ({ isOpen, onClose }) =
       });
 
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting support request:', error);
-      alert('Erro ao enviar solicitação. Tente novamente.');
+      const errorMsg = error?.response?.data?.error || error?.message || 'Erro desconhecido';
+      alert(`Erro ao enviar solicitação: ${errorMsg}\n\nTente novamente ou entre em contato com o administrador.`);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-2 sm:p-4">
-      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-md sm:max-w-lg max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-800">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-md sm:max-w-lg my-8 border border-slate-200 dark:border-slate-800 max-h-[calc(100vh-4rem)] overflow-y-auto">
         <div className="flex justify-between items-center p-6 border-b border-slate-200 dark:border-slate-800">
           <div className="flex items-center">
             <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mr-3">

@@ -131,9 +131,10 @@ export const ITDemandModal: React.FC<ITDemandModalProps> = ({ isOpen, onClose, d
       }
 
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting IT demand:', error);
-      alert('Erro ao enviar demanda. Tente novamente.');
+      const errorMsg = error?.response?.data?.error || error?.message || 'Erro desconhecido';
+      alert(`Erro ao enviar demanda: ${errorMsg}\n\nDetalhes: ${JSON.stringify(error?.response?.data || {})}\n\nTente novamente ou entre em contato com o administrador.`);
     }
   };
 
@@ -198,8 +199,8 @@ export const ITDemandModal: React.FC<ITDemandModalProps> = ({ isOpen, onClose, d
   const isViewMode = !!demand && !canEdit;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-2 sm:p-4">
-      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-800">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-3xl my-8 border border-slate-200 dark:border-slate-800 max-h-[calc(100vh-4rem)] overflow-y-auto">
         <div className="flex justify-between items-center p-4 sm:p-6 border-b border-slate-200 dark:border-slate-800">
           <h2 className="text-xl font-bold text-slate-900 dark:text-white">
             {demand ? (isViewMode ? 'Detalhes da Demanda' : 'Editar Demanda TI') : 'Nova Demanda TI'}
