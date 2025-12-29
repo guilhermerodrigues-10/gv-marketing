@@ -4,6 +4,7 @@ import { Button } from '../ui/Button';
 import { Input, Textarea, Select } from '../ui/Input';
 import { useApp } from '../../contexts/AppContext';
 import { itDemandsAPI } from '../../lib/itDemandsAPI';
+import { Portal } from '../ui/Portal';
 
 interface SupportModalProps {
   isOpen: boolean;
@@ -58,8 +59,9 @@ export const SupportModal: React.FC<SupportModalProps> = ({ isOpen, onClose }) =
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" style={{ left: 0, top: 0, right: 0, bottom: 0 }}>
-      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-md sm:max-w-lg border border-slate-200 dark:border-slate-800 max-h-[90vh] overflow-y-auto">
+    <Portal>
+      <div className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" style={{ left: 0, top: 0, right: 0, bottom: 0 }}>
+        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-md sm:max-w-lg border border-slate-200 dark:border-slate-800 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center p-6 border-b border-slate-200 dark:border-slate-800">
           <div className="flex items-center">
             <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mr-3">
@@ -122,7 +124,8 @@ export const SupportModal: React.FC<SupportModalProps> = ({ isOpen, onClose }) =
             </Button>
           </div>
         </form>
+        </div>
       </div>
-    </div>
+    </Portal>
   );
 };
