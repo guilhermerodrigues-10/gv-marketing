@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Kanban, Calendar, Settings, PieChart, Users, Folder, Image } from 'lucide-react';
+import { LayoutDashboard, Kanban, Calendar, Settings, PieChart, Users, Folder, Image, Headphones } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
 
 export const Sidebar: React.FC = () => {
@@ -18,6 +18,12 @@ export const Sidebar: React.FC = () => {
       label: 'Relatórios',
       path: '/reports',
       requiredRoles: ['Admin', 'Gerente']
+    },
+    {
+      icon: Headphones,
+      label: 'Demandas TI',
+      path: '/it-demands',
+      requiredRoles: ['Admin']
     },
     { icon: Users, label: 'Equipe', path: '/team' },
     { icon: Calendar, label: 'Calendário', path: '/calendar' },

@@ -8,6 +8,7 @@ require('dotenv').config();
 
 const authRoutes = require('./src/routes/auth.routes');
 const assetsRoutes = require('./src/routes/assets.routes');
+const itDemandsRoutes = require('./src/routes/it-demands.routes');
 const apiRoutes = require('./src/routes/index');
 const { pool } = require('./src/config/database');
 const { requireAuth } = require('./src/middleware/auth.middleware');
@@ -87,6 +88,7 @@ app.use('/api/', limiter);
 // Routes
 app.use('/api/auth', authRoutes); // Auth com PostgreSQL (pode não funcionar sem DB)
 app.use('/api/assets', assetsRoutes); // Upload de assets (sem autenticação - verificação no frontend)
+app.use('/api/it-demands', itDemandsRoutes); // IT Demands management
 app.use('/api', apiRoutes);
 
 // Health check
