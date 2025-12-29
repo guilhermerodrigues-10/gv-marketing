@@ -87,8 +87,10 @@ export const ITDemandsPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
 
-  // Redirect non-Admin users
-  if (user?.role !== 'Admin') {
+  // Only Admins can access IT Demands
+  const isAdmin = user?.role === 'Admin';
+
+  if (!isAdmin) {
     return (
       <div className="h-full flex items-center justify-center">
         <div className="text-center">
@@ -123,14 +125,14 @@ export const ITDemandsPage: React.FC = () => {
 
   // Load demands from API (only for Admins)
   useEffect(() => {
-    if (user?.role === 'Admin') {
+    if (isAdmin) {
       loadDemands();
     }
-  }, [user]);
+  }, [user, isAdmin]);
 
   // WebSocket real-time updates (only for Admins)
   useEffect(() => {
-    if (!socket || user?.role !== 'Admin') return;
+    if (!socket || !isAdmin) return;
 
     const handleDemandCreated = () => {
       console.log('🔔 New IT demand created, refreshing...');
@@ -156,7 +158,7 @@ export const ITDemandsPage: React.FC = () => {
       socket.off('it-demand:updated', handleDemandUpdated);
       socket.off('it-demand:deleted', handleDemandDeleted);
     };
-  }, [socket, user]);
+  }, [socket, user, isAdmin]);
 
   const loadDemands = async () => {
     try {
