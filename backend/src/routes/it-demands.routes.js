@@ -9,31 +9,60 @@ const router = express.Router();
 // GET /api/it-demands - Get all IT demands (Admin only)
 router.get('/', authMiddleware, checkRole(['Admin']), async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT
-        id,
-        title,
-        description,
-        requester_name,
-        requester_email,
-        requester_id,
-        urgency,
-        priority,
-        status,
-        due_date,
-        assignees,
-        created_at,
-        updated_at
-      FROM it_demands
-      ORDER BY
-        CASE urgency
-          WHEN 'Crítica' THEN 1
-          WHEN 'Alta' THEN 2
-          WHEN 'Média' THEN 3
-          WHEN 'Baixa' THEN 4
-        END,
-        created_at DESC
-    `);
+    let result;
+    try {
+      // Try with new schema (after migration 008)
+      result = await pool.query(`
+        SELECT
+          id,
+          title,
+          description,
+          requester_name,
+          requester_email,
+          requester_id,
+          urgency,
+          priority,
+          status,
+          due_date,
+          assignees,
+          created_at,
+          updated_at
+        FROM it_demands
+        ORDER BY
+          CASE urgency
+            WHEN 'Crítica' THEN 1
+            WHEN 'Alta' THEN 2
+            WHEN 'Média' THEN 3
+            WHEN 'Baixa' THEN 4
+          END,
+          created_at DESC
+      `);
+    } catch (selectError) {
+      // Fallback to old schema (before migration 008)
+      console.warn('Using fallback schema for IT demands GET (migration 008 not yet applied)');
+      result = await pool.query(`
+        SELECT
+          id,
+          title,
+          description,
+          requester_name,
+          requester_email,
+          requester_id,
+          urgency,
+          status,
+          created_at,
+          updated_at
+        FROM it_demands
+        ORDER BY
+          CASE urgency
+            WHEN 'Crítica' THEN 1
+            WHEN 'Alta' THEN 2
+            WHEN 'Média' THEN 3
+            WHEN 'Baixa' THEN 4
+          END,
+          created_at DESC
+      `);
+    }
 
     res.json(result.rows);
   } catch (error) {
@@ -91,22 +120,42 @@ router.post('/', authMiddleware, async (req, res) => {
       }
     }
 
-    const result = await pool.query(
-      `INSERT INTO it_demands (title, description, requester_name, requester_email, requester_id, urgency, priority, status, due_date, assignees)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, 'backlog', $8, $9)
-       RETURNING *`,
-      [
-        title,
-        description,
-        req.user.name,
-        req.user.email,
-        req.user.id,
-        urgency,
-        priority || 'Normal',
-        dueDate || null,
-        assignees ? JSON.stringify(assignees) : '[]'
-      ]
-    );
+    let result;
+    try {
+      // Try with new schema (after migration 008)
+      result = await pool.query(
+        `INSERT INTO it_demands (title, description, requester_name, requester_email, requester_id, urgency, priority, status, due_date, assignees)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, 'backlog', $8, $9)
+         RETURNING *`,
+        [
+          title,
+          description,
+          req.user.name,
+          req.user.email,
+          req.user.id,
+          urgency,
+          priority || 'Normal',
+          dueDate || null,
+          assignees ? JSON.stringify(assignees) : '[]'
+        ]
+      );
+    } catch (insertError) {
+      // Fallback to old schema (before migration 008) if columns don't exist
+      console.warn('Using fallback schema for IT demands (migration 008 not yet applied)');
+      result = await pool.query(
+        `INSERT INTO it_demands (title, description, requester_name, requester_email, requester_id, urgency, status)
+         VALUES ($1, $2, $3, $4, $5, $6, 'backlog')
+         RETURNING *`,
+        [
+          title,
+          description,
+          req.user.name,
+          req.user.email,
+          req.user.id,
+          urgency
+        ]
+      );
+    }
 
     const newDemand = result.rows[0];
 
