@@ -120,6 +120,13 @@ router.post('/', authMiddleware, async (req, res) => {
       }
     }
 
+    // Log req.user to debug NULL name issue
+    console.log('🔍 DEBUG req.user:', JSON.stringify(req.user, null, 2));
+
+    // Extract requester name with fallback (fix for NULL req.user.name)
+    const requesterName = req.user?.name || req.user?.email?.split('@')[0] || 'Usuário';
+    console.log(`✅ Using requester name: "${requesterName}" (original: ${req.user?.name})`);
+
     let result;
     try {
       // Try with new schema (after migration 008)
@@ -130,7 +137,7 @@ router.post('/', authMiddleware, async (req, res) => {
         [
           title,
           description,
-          req.user.name,
+          requesterName,
           req.user.email,
           req.user.id,
           urgency,
@@ -149,7 +156,7 @@ router.post('/', authMiddleware, async (req, res) => {
         [
           title,
           description,
-          req.user.name,
+          requesterName,
           req.user.email,
           req.user.id,
           urgency
