@@ -6,6 +6,7 @@ import { Input, Textarea, Select } from '../ui/Input';
 import { ITDemand, itDemandsAPI } from '../../lib/itDemandsAPI';
 import { assetsAPI } from '../../lib/api';
 import { Attachment } from '../../types';
+import { Portal } from '../ui/Portal';
 
 interface ITDemandModalProps {
   isOpen: boolean;
@@ -199,8 +200,9 @@ export const ITDemandModal: React.FC<ITDemandModalProps> = ({ isOpen, onClose, d
   const isViewMode = !!demand && !canEdit;
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" style={{ left: 0, top: 0, right: 0, bottom: 0 }}>
-      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-3xl border border-slate-200 dark:border-slate-800 max-h-[90vh] overflow-y-auto">
+    <Portal>
+      <div className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" style={{ left: 0, top: 0, right: 0, bottom: 0 }}>
+        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-3xl border border-slate-200 dark:border-slate-800 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center p-4 sm:p-6 border-b border-slate-200 dark:border-slate-800">
           <h2 className="text-xl font-bold text-slate-900 dark:text-white">
             {demand ? (isViewMode ? 'Detalhes da Demanda' : 'Editar Demanda TI') : 'Nova Demanda TI'}
@@ -471,7 +473,8 @@ export const ITDemandModal: React.FC<ITDemandModalProps> = ({ isOpen, onClose, d
             </div>
           </div>
         </form>
+        </div>
       </div>
-    </div>
+    </Portal>
   );
 };
