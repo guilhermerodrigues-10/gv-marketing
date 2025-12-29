@@ -17,7 +17,7 @@ const authMiddleware = (req, res, next) => {
 };
 
 // Middleware to check if user has required role
-const checkRole = (...allowedRoles) => {
+const checkRole = (allowedRoles) => {
   return (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({ error: 'Não autenticado' });
