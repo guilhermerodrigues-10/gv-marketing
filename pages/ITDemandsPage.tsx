@@ -90,6 +90,12 @@ export const ITDemandsPage: React.FC = () => {
   // Only Admins can access IT Demands
   const isAdmin = user?.role === 'Admin';
 
+  console.log('🔐 IT Demands Access Check:', {
+    userEmail: user?.email,
+    userRole: user?.role,
+    isAdmin
+  });
+
   if (!isAdmin) {
     return (
       <div className="h-full flex items-center justify-center">
@@ -162,11 +168,13 @@ export const ITDemandsPage: React.FC = () => {
 
   const loadDemands = async () => {
     try {
+      console.log('🔄 Loading IT demands...');
       setIsLoading(true);
       const data = await itDemandsAPI.getAll();
+      console.log(`✅ Loaded ${data.length} IT demands:`, data);
       setDemands(data);
     } catch (error) {
-      console.error('Error loading IT demands:', error);
+      console.error('❌ Error loading IT demands:', error);
     } finally {
       setIsLoading(false);
     }
