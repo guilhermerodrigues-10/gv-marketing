@@ -87,6 +87,23 @@ export const ITDemandsPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
 
+  // Redirect non-Admin users
+  if (user?.role !== 'Admin') {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle size={48} className="text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
+            Acesso Negado
+          </h2>
+          <p className="text-slate-500 dark:text-slate-400">
+            Apenas administradores podem acessar as Demandas TI.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -104,14 +121,16 @@ export const ITDemandsPage: React.FC = () => {
     { id: 'concluido', title: 'Concluído', color: '#10b981' }
   ]);
 
-  // Load demands from API
+  // Load demands from API (only for Admins)
   useEffect(() => {
-    loadDemands();
-  }, []);
+    if (user?.role === 'Admin') {
+      loadDemands();
+    }
+  }, [user]);
 
-  // WebSocket real-time updates
+  // WebSocket real-time updates (only for Admins)
   useEffect(() => {
-    if (!socket) return;
+    if (!socket || user?.role !== 'Admin') return;
 
     const handleDemandCreated = () => {
       console.log('🔔 New IT demand created, refreshing...');
@@ -137,7 +156,7 @@ export const ITDemandsPage: React.FC = () => {
       socket.off('it-demand:updated', handleDemandUpdated);
       socket.off('it-demand:deleted', handleDemandDeleted);
     };
-  }, [socket]);
+  }, [socket, user]);
 
   const loadDemands = async () => {
     try {
