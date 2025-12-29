@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { DndContext, DragEndEvent, DragOverlay, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
+import { DndContext, DragEndEvent, DragOverlay, useSensor, useSensors, PointerSensor, useDroppable, DragStartEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Plus, MoreVertical, Clock, AlertCircle, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Plus, MoreVertical, Clock, AlertCircle, AlertTriangle, CheckCircle, Pencil, Trash2 } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import { ITDemandModal } from '../components/modals/ITDemandModal';
 import { itDemandsAPI, ITDemand } from '../lib/itDemandsAPI';
@@ -25,9 +25,12 @@ const urgencyIcons = {
 interface DemandCardProps {
   demand: ITDemand;
   onClick: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
 }
 
-const DemandCard: React.FC<DemandCardProps> = ({ demand, onClick }) => {
+const DemandCard: React.FC<DemandCardProps> = ({ demand, onClick, onEdit, onDelete }) => {
+  const [showMenu, setShowMenu] = useState(false);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: demand.id,
     data: { status: demand.status }
@@ -45,35 +48,145 @@ const DemandCard: React.FC<DemandCardProps> = ({ demand, onClick }) => {
     <div
       ref={setNodeRef}
       style={style}
-      {...attributes}
-      {...listeners}
-      className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 cursor-pointer hover:shadow-md transition-shadow"
-      onClick={onClick}
+      className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 cursor-pointer hover:shadow-md transition-shadow relative"
     >
-      <div className="flex justify-between items-start mb-2">
-        <h4 className="font-medium text-slate-900 dark:text-white flex-1">
-          {demand.title}
-        </h4>
-        <button className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300" onClick={(e) => e.stopPropagation()}>
-          <MoreVertical size={16} />
-        </button>
+      <div {...attributes} {...listeners} onClick={onClick} className="cursor-move">
+        <div className="flex justify-between items-start mb-2">
+          <h4 className="font-medium text-slate-900 dark:text-white flex-1 pr-2">
+            {demand.title}
+          </h4>
+          <div className="relative">
+            <button
+              className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowMenu(!showMenu);
+              }}
+            >
+              <MoreVertical size={16} />
+            </button>
+
+            {showMenu && (
+              <>
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowMenu(false);
+                  }}
+                />
+                <div className="absolute right-0 mt-1 w-40 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-50">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowMenu(false);
+                      onEdit();
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-t-lg flex items-center"
+                  >
+                    <Pencil size={14} className="mr-2" />
+                    Editar
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowMenu(false);
+                      onDelete();
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-b-lg flex items-center"
+                  >
+                    <Trash2 size={14} className="mr-2" />
+                    Excluir
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {demand.description && (
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-3 line-clamp-2">
+            {demand.description}
+          </p>
+        )}
+
+        <div className="flex items-center justify-between">
+          <span className={`text-xs px-2 py-1 rounded-full flex items-center ${urgencyColors[demand.urgency]}`}>
+            <UrgencyIcon size={12} className="mr-1" />
+            {demand.urgency}
+          </span>
+          <span className="text-xs text-slate-500 dark:text-slate-400">
+            {demand.requesterName}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Droppable Column Component
+interface DroppableColumnProps {
+  id: string;
+  title: string;
+  color: string;
+  demands: ITDemand[];
+  onCardClick: (demand: ITDemand) => void;
+  onCardEdit: (demand: ITDemand) => void;
+  onCardDelete: (demand: ITDemand) => void;
+}
+
+const DroppableColumn: React.FC<DroppableColumnProps> = ({
+  id,
+  title,
+  color,
+  demands,
+  onCardClick,
+  onCardEdit,
+  onCardDelete
+}) => {
+  const { setNodeRef, isOver } = useDroppable({ id });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`flex-shrink-0 w-80 rounded-lg p-4 flex flex-col transition-colors ${
+        isOver ? 'bg-slate-100 dark:bg-slate-800' : 'bg-slate-50 dark:bg-slate-900'
+      }`}
+      style={{ maxHeight: 'calc(100vh - 280px)' }}
+    >
+      <div className="flex items-center justify-between mb-4 flex-shrink-0">
+        <div className="flex items-center">
+          <div
+            className="w-3 h-3 rounded-full mr-2"
+            style={{ backgroundColor: color }}
+          />
+          <h3 className="font-semibold text-slate-900 dark:text-white">
+            {title}
+          </h3>
+          <span className="ml-2 px-2 py-0.5 bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs rounded-full">
+            {demands.length}
+          </span>
+        </div>
       </div>
 
-      {demand.description && (
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-3 line-clamp-2">
-          {demand.description}
-        </p>
-      )}
-
-      <div className="flex items-center justify-between">
-        <span className={`text-xs px-2 py-1 rounded-full flex items-center ${urgencyColors[demand.urgency]}`}>
-          <UrgencyIcon size={12} className="mr-1" />
-          {demand.urgency}
-        </span>
-        <span className="text-xs text-slate-500 dark:text-slate-400">
-          {demand.requesterName}
-        </span>
-      </div>
+      <SortableContext items={demands.map(d => d.id)} strategy={verticalListSortingStrategy}>
+        <div className="space-y-3 overflow-y-auto flex-1 pr-2">
+          {demands.map((demand) => (
+            <DemandCard
+              key={demand.id}
+              demand={demand}
+              onClick={() => onCardClick(demand)}
+              onEdit={() => onCardEdit(demand)}
+              onDelete={() => onCardDelete(demand)}
+            />
+          ))}
+          {demands.length === 0 && (
+            <div className="text-center py-8 text-slate-400 dark:text-slate-600 text-sm">
+              Sem tarefas
+            </div>
+          )}
+        </div>
+      </SortableContext>
     </div>
   );
 };
@@ -180,29 +293,44 @@ export const ITDemandsPage: React.FC = () => {
     }
   };
 
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+  };
+
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
+    setActiveId(null);
 
     if (!over) return;
 
     const activeId = active.id as string;
     const overId = over.id as string;
 
-    // Find the column of the active item
-    const activeColumn = active.data.current?.status;
+    // Find the active demand
+    const activeDemand = demands.find(d => d.id === activeId);
+    if (!activeDemand) return;
 
-    // Determine the target column
+    // Determine target column
     let targetColumn = overId;
 
-    // If dropped on another item, use that item's column
-    if (over.data.current?.status) {
-      targetColumn = over.data.current.status;
+    // Check if dropped over a column
+    const isDroppedOnColumn = columns.find(c => c.id === overId);
+    if (isDroppedOnColumn) {
+      targetColumn = overId;
+    } else {
+      // Dropped on another card, use that card's column
+      const targetDemand = demands.find(d => d.id === overId);
+      if (targetDemand) {
+        targetColumn = targetDemand.status;
+      }
     }
 
     // If same column, no update needed
-    if (activeColumn === targetColumn) {
+    if (activeDemand.status === targetColumn) {
       return;
     }
+
+    console.log(`🔄 Moving demand ${activeId} from ${activeDemand.status} to ${targetColumn}`);
 
     // Optimistic update
     setDemands(prevDemands =>
@@ -216,10 +344,27 @@ export const ITDemandsPage: React.FC = () => {
     // Update on backend
     try {
       await itDemandsAPI.updateStatus(activeId, targetColumn);
+      console.log(`✅ Demand ${activeId} moved to ${targetColumn}`);
     } catch (error) {
-      console.error('Error updating demand status:', error);
+      console.error('❌ Error updating demand status:', error);
       // Revert on error
       loadDemands();
+    }
+  };
+
+  const handleDeleteDemand = async (demand: ITDemand) => {
+    if (!confirm(`Tem certeza que deseja excluir a demanda "${demand.title}"?`)) {
+      return;
+    }
+
+    try {
+      await itDemandsAPI.delete(demand.id);
+      console.log(`🗑️ Demand ${demand.id} deleted`);
+      // Remove from local state
+      setDemands(prevDemands => prevDemands.filter(d => d.id !== demand.id));
+    } catch (error) {
+      console.error('❌ Error deleting demand:', error);
+      alert('Erro ao excluir demanda. Tente novamente.');
     }
   };
 
@@ -260,56 +405,36 @@ export const ITDemandsPage: React.FC = () => {
       </div>
 
       <div className="w-full overflow-x-auto -mx-4 md:-mx-6 px-4 md:px-6">
-        <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+        <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
           <div className="inline-flex gap-4 pb-4 min-w-full">
-            {columns.map(column => {
-              const columnDemands = getDemandsByStatus(column.id);
-
-              return (
-                <div
-                  key={column.id}
-                  id={column.id}
-                  className="flex-shrink-0 w-80 bg-slate-50 dark:bg-slate-900 rounded-lg p-4 flex flex-col"
-                  style={{ maxHeight: 'calc(100vh - 280px)' }}
-                >
-                  <div className="flex items-center justify-between mb-4 flex-shrink-0">
-                    <div className="flex items-center">
-                      <div
-                        className="w-3 h-3 rounded-full mr-2"
-                        style={{ backgroundColor: column.color }}
-                      />
-                      <h3 className="font-semibold text-slate-900 dark:text-white">
-                        {column.title}
-                      </h3>
-                      <span className="ml-2 px-2 py-0.5 bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs rounded-full">
-                        {columnDemands.length}
-                      </span>
-                    </div>
-                  </div>
-
-                  <SortableContext items={columnDemands.map(d => d.id)} strategy={verticalListSortingStrategy}>
-                    <div className="space-y-3 overflow-y-auto flex-1 pr-2">
-                      {columnDemands.map((demand) => (
-                        <DemandCard
-                          key={demand.id}
-                          demand={demand}
-                          onClick={() => {
-                            setSelectedDemand(demand);
-                            setIsModalOpen(true);
-                          }}
-                        />
-                      ))}
-                      {columnDemands.length === 0 && (
-                        <div className="text-center py-8 text-slate-400 dark:text-slate-600 text-sm">
-                          Sem tarefas
-                        </div>
-                      )}
-                    </div>
-                  </SortableContext>
-                </div>
-              );
-            })}
+            {columns.map(column => (
+              <DroppableColumn
+                key={column.id}
+                id={column.id}
+                title={column.title}
+                color={column.color}
+                demands={getDemandsByStatus(column.id)}
+                onCardClick={(demand) => {
+                  setSelectedDemand(demand);
+                  setIsModalOpen(true);
+                }}
+                onCardEdit={(demand) => {
+                  setSelectedDemand(demand);
+                  setIsModalOpen(true);
+                }}
+                onCardDelete={handleDeleteDemand}
+              />
+            ))}
           </div>
+          <DragOverlay>
+            {activeId ? (
+              <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-lg border-2 border-primary-500 opacity-90">
+                <p className="font-medium text-slate-900 dark:text-white">
+                  {demands.find(d => d.id === activeId)?.title}
+                </p>
+              </div>
+            ) : null}
+          </DragOverlay>
         </DndContext>
       </div>
 
