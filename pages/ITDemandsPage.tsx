@@ -210,82 +210,93 @@ export const ITDemandsPage: React.FC = () => {
   }
 
   return (
-    <div className="h-full">
-      <div className="mb-6 flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Demandas TI</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">
-            Gerencie solicitações e suporte técnico
-          </p>
+    <div className="fixed inset-0 md:left-20 md:top-0 bg-white dark:bg-black z-10 overflow-hidden">
+      <div className="h-full flex flex-col">
+        <div className="flex-shrink-0 p-4 md:p-6 border-b border-slate-200 dark:border-slate-800">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Demandas TI</h1>
+              <p className="text-slate-500 dark:text-slate-400 mt-1">
+                Gerencie solicitações e suporte técnico
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                setSelectedDemand(null);
+                setIsModalOpen(true);
+              }}
+              className="flex items-center justify-center px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors whitespace-nowrap"
+            >
+              <Plus size={20} className="mr-2" />
+              Nova Demanda
+            </button>
+          </div>
         </div>
-        <button
-          onClick={() => {
-            setSelectedDemand(null);
-            setIsModalOpen(true);
-          }}
-          className="flex items-center px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
-        >
-          <Plus size={20} className="mr-2" />
-          Nova Demanda
-        </button>
+
+        <div className="flex-1 overflow-x-auto overflow-y-hidden">
+          <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+            <div className="h-full flex gap-4 p-4 md:p-6">
+              {columns.map(column => {
+                const columnDemands = getDemandsByStatus(column.id);
+
+                return (
+                  <div
+                    key={column.id}
+                    id={column.id}
+                    className="flex-shrink-0 w-80 bg-slate-50 dark:bg-slate-900 rounded-lg p-4 flex flex-col h-full"
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center">
+                        <div
+                          className="w-3 h-3 rounded-full mr-2"
+                          style={{ backgroundColor: column.color }}
+                        />
+                        <h3 className="font-semibold text-slate-900 dark:text-white">
+                          {column.title}
+                        </h3>
+                        <span className="ml-2 px-2 py-0.5 bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs rounded-full">
+                          {columnDemands.length}
+                        </span>
+                      </div>
+                    </div>
+
+                    <SortableContext items={columnDemands.map(d => d.id)} strategy={verticalListSortingStrategy}>
+                      <div className="space-y-3 overflow-y-auto flex-1 pr-2">
+                        {columnDemands.map((demand) => (
+                          <DemandCard
+                            key={demand.id}
+                            demand={demand}
+                            onClick={() => {
+                              setSelectedDemand(demand);
+                              setIsModalOpen(true);
+                            }}
+                          />
+                        ))}
+                        {columnDemands.length === 0 && (
+                          <div className="text-center py-8 text-slate-400 dark:text-slate-600 text-sm">
+                            Sem tarefas
+                          </div>
+                        )}
+                      </div>
+                    </SortableContext>
+                  </div>
+                );
+              })}
+            </div>
+          </DndContext>
+        </div>
+
+        {isModalOpen && (
+          <ITDemandModal
+            isOpen={isModalOpen}
+            onClose={() => {
+              setIsModalOpen(false);
+              setSelectedDemand(null);
+            }}
+            demand={selectedDemand}
+          />
+        )}
       </div>
-
-      <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-        <div className="flex gap-4 overflow-x-auto pb-4">
-          {columns.map(column => {
-            const columnDemands = getDemandsByStatus(column.id);
-
-            return (
-              <div
-                key={column.id}
-                id={column.id}
-                className="flex-shrink-0 w-80 bg-slate-50 dark:bg-slate-900 rounded-lg p-4"
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center">
-                    <div
-                      className="w-3 h-3 rounded-full mr-2"
-                      style={{ backgroundColor: column.color }}
-                    />
-                    <h3 className="font-semibold text-slate-900 dark:text-white">
-                      {column.title}
-                    </h3>
-                    <span className="ml-2 px-2 py-0.5 bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs rounded-full">
-                      {columnDemands.length}
-                    </span>
-                  </div>
-                </div>
-
-                <SortableContext items={columnDemands.map(d => d.id)} strategy={verticalListSortingStrategy}>
-                  <div className="space-y-3 min-h-[200px]">
-                    {columnDemands.map((demand) => (
-                      <DemandCard
-                        key={demand.id}
-                        demand={demand}
-                        onClick={() => {
-                          setSelectedDemand(demand);
-                          setIsModalOpen(true);
-                        }}
-                      />
-                    ))}
-                  </div>
-                </SortableContext>
-              </div>
-            );
-          })}
-        </div>
-      </DndContext>
-
-      {isModalOpen && (
-        <ITDemandModal
-          isOpen={isModalOpen}
-          onClose={() => {
-            setIsModalOpen(false);
-            setSelectedDemand(null);
-          }}
-          demand={selectedDemand}
-        />
-      )}
     </div>
   );
 };
