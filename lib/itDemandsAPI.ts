@@ -1,4 +1,4 @@
-import { apiClient } from './api';
+import api from './api';
 
 export interface ITDemand {
   id: string;
@@ -22,7 +22,7 @@ export interface CreateITDemandInput {
 export const itDemandsAPI = {
   // Get all IT demands (Admin only)
   getAll: async (): Promise<ITDemand[]> => {
-    const response = await apiClient.get('/it-demands');
+    const response = await api.get('/it-demands');
     return response.data.map((demand: any) => ({
       id: demand.id,
       title: demand.title,
@@ -39,7 +39,7 @@ export const itDemandsAPI = {
 
   // Get single IT demand
   getById: async (id: string): Promise<ITDemand> => {
-    const response = await apiClient.get(`/it-demands/${id}`);
+    const response = await api.get(`/it-demands/${id}`);
     const demand = response.data;
     return {
       id: demand.id,
@@ -57,7 +57,7 @@ export const itDemandsAPI = {
 
   // Create new IT demand
   create: async (data: CreateITDemandInput): Promise<ITDemand> => {
-    const response = await apiClient.post('/it-demands', data);
+    const response = await api.post('/it-demands', data);
     const demand = response.data;
     return {
       id: demand.id,
@@ -75,7 +75,7 @@ export const itDemandsAPI = {
 
   // Update IT demand status (Admin only)
   updateStatus: async (id: string, status: string): Promise<ITDemand> => {
-    const response = await apiClient.put(`/it-demands/${id}`, { status });
+    const response = await api.put(`/it-demands/${id}`, { status });
     const demand = response.data;
     return {
       id: demand.id,
@@ -93,6 +93,6 @@ export const itDemandsAPI = {
 
   // Delete IT demand (Admin only)
   delete: async (id: string): Promise<void> => {
-    await apiClient.delete(`/it-demands/${id}`);
+    await api.delete(`/it-demands/${id}`);
   }
 };
