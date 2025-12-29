@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
+import { DndContext, DragEndEvent, DragOverlay, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { Plus, MoreVertical, Clock, AlertCircle, AlertTriangle, CheckCircle } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import { ITDemandModal } from '../components/modals/ITDemandModal';
@@ -20,6 +22,62 @@ const urgencyIcons = {
   'Crítica': AlertCircle
 };
 
+interface DemandCardProps {
+  demand: ITDemand;
+  onClick: () => void;
+}
+
+const DemandCard: React.FC<DemandCardProps> = ({ demand, onClick }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: demand.id,
+    data: { status: demand.status }
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  const UrgencyIcon = urgencyIcons[demand.urgency];
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 cursor-pointer hover:shadow-md transition-shadow"
+      onClick={onClick}
+    >
+      <div className="flex justify-between items-start mb-2">
+        <h4 className="font-medium text-slate-900 dark:text-white flex-1">
+          {demand.title}
+        </h4>
+        <button className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300" onClick={(e) => e.stopPropagation()}>
+          <MoreVertical size={16} />
+        </button>
+      </div>
+
+      {demand.description && (
+        <p className="text-sm text-slate-500 dark:text-slate-400 mb-3 line-clamp-2">
+          {demand.description}
+        </p>
+      )}
+
+      <div className="flex items-center justify-between">
+        <span className={`text-xs px-2 py-1 rounded-full flex items-center ${urgencyColors[demand.urgency]}`}>
+          <UrgencyIcon size={12} className="mr-1" />
+          {demand.urgency}
+        </span>
+        <span className="text-xs text-slate-500 dark:text-slate-400">
+          {demand.requesterName}
+        </span>
+      </div>
+    </div>
+  );
+};
+
 export const ITDemandsPage: React.FC = () => {
   const { user } = useApp();
   const socket = useSocket();
@@ -27,6 +85,15 @@ export const ITDemandsPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [demands, setDemands] = useState<ITDemand[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
 
   // IT-specific columns
   const [columns] = useState([
@@ -84,27 +151,42 @@ export const ITDemandsPage: React.FC = () => {
     }
   };
 
-  const handleDragEnd = async (result: DropResult) => {
-    if (!result.destination) return;
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
 
-    const { source, destination, draggableId } = result;
+    if (!over) return;
 
-    if (source.droppableId === destination.droppableId && source.index === destination.index) {
+    const activeId = active.id as string;
+    const overId = over.id as string;
+
+    // Find the column of the active item
+    const activeColumn = active.data.current?.status;
+
+    // Determine the target column
+    let targetColumn = overId;
+
+    // If dropped on another item, use that item's column
+    if (over.data.current?.status) {
+      targetColumn = over.data.current.status;
+    }
+
+    // If same column, no update needed
+    if (activeColumn === targetColumn) {
       return;
     }
 
     // Optimistic update
     setDemands(prevDemands =>
       prevDemands.map(demand =>
-        demand.id === draggableId
-          ? { ...demand, status: destination.droppableId }
+        demand.id === activeId
+          ? { ...demand, status: targetColumn }
           : demand
       )
     );
 
     // Update on backend
     try {
-      await itDemandsAPI.updateStatus(draggableId, destination.droppableId);
+      await itDemandsAPI.updateStatus(activeId, targetColumn);
     } catch (error) {
       console.error('Error updating demand status:', error);
       // Revert on error
@@ -148,7 +230,7 @@ export const ITDemandsPage: React.FC = () => {
         </button>
       </div>
 
-      <DragDropContext onDragEnd={handleDragEnd}>
+      <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
         <div className="flex gap-4 overflow-x-auto pb-4">
           {columns.map(column => {
             const columnDemands = getDemandsByStatus(column.id);
@@ -156,6 +238,7 @@ export const ITDemandsPage: React.FC = () => {
             return (
               <div
                 key={column.id}
+                id={column.id}
                 className="flex-shrink-0 w-80 bg-slate-50 dark:bg-slate-900 rounded-lg p-4"
               >
                 <div className="flex items-center justify-between mb-4">
@@ -173,71 +256,25 @@ export const ITDemandsPage: React.FC = () => {
                   </div>
                 </div>
 
-                <Droppable droppableId={column.id}>
-                  {(provided, snapshot) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.droppableProps}
-                      className={`space-y-3 min-h-[200px] ${
-                        snapshot.isDraggingOver ? 'bg-slate-100 dark:bg-slate-800 rounded-lg' : ''
-                      }`}
-                    >
-                      {columnDemands.map((demand, index) => {
-                        const UrgencyIcon = urgencyIcons[demand.urgency];
-
-                        return (
-                          <Draggable key={demand.id} draggableId={demand.id} index={index}>
-                            {(provided, snapshot) => (
-                              <div
-                                ref={provided.innerRef}
-                                {...provided.draggableProps}
-                                {...provided.dragHandleProps}
-                                className={`bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 cursor-pointer hover:shadow-md transition-shadow ${
-                                  snapshot.isDragging ? 'rotate-2 shadow-lg' : ''
-                                }`}
-                                onClick={() => {
-                                  setSelectedDemand(demand);
-                                  setIsModalOpen(true);
-                                }}
-                              >
-                                <div className="flex justify-between items-start mb-2">
-                                  <h4 className="font-medium text-slate-900 dark:text-white flex-1">
-                                    {demand.title}
-                                  </h4>
-                                  <button className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
-                                    <MoreVertical size={16} />
-                                  </button>
-                                </div>
-
-                                {demand.description && (
-                                  <p className="text-sm text-slate-500 dark:text-slate-400 mb-3 line-clamp-2">
-                                    {demand.description}
-                                  </p>
-                                )}
-
-                                <div className="flex items-center justify-between">
-                                  <span className={`text-xs px-2 py-1 rounded-full flex items-center ${urgencyColors[demand.urgency]}`}>
-                                    <UrgencyIcon size={12} className="mr-1" />
-                                    {demand.urgency}
-                                  </span>
-                                  <span className="text-xs text-slate-500 dark:text-slate-400">
-                                    {demand.requesterName}
-                                  </span>
-                                </div>
-                              </div>
-                            )}
-                          </Draggable>
-                        );
-                      })}
-                      {provided.placeholder}
-                    </div>
-                  )}
-                </Droppable>
+                <SortableContext items={columnDemands.map(d => d.id)} strategy={verticalListSortingStrategy}>
+                  <div className="space-y-3 min-h-[200px]">
+                    {columnDemands.map((demand) => (
+                      <DemandCard
+                        key={demand.id}
+                        demand={demand}
+                        onClick={() => {
+                          setSelectedDemand(demand);
+                          setIsModalOpen(true);
+                        }}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
               </div>
             );
           })}
         </div>
-      </DragDropContext>
+      </DndContext>
 
       {isModalOpen && (
         <ITDemandModal
