@@ -43,7 +43,7 @@ const ProtectedLayout = () => {
         className={`flex flex-col min-h-screen transition-all duration-300 ${sidebarOpen ? 'md:ml-64' : 'md:ml-20'}`}
       >
         <Header />
-        <main className="flex-1 p-4 md:p-6 overflow-x-hidden">
+        <main className="flex-1 p-4 md:p-6">
           <Outlet />
         </main>
       </div>
