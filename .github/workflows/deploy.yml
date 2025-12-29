@@ -46,3 +46,15 @@ jobs:
             ${{ secrets.DOCKER_USERNAME }}/gv-marketing-frontend:${{ github.sha }}
           cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/gv-marketing-frontend:buildcache
           cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/gv-marketing-frontend:buildcache,mode=max
+
+      - name: Run Database Migrations
+        run: |
+          cd backend
+          npm ci --production
+          node run-migration-008.js
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
