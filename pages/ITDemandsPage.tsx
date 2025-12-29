@@ -210,32 +210,30 @@ export const ITDemandsPage: React.FC = () => {
   }
 
   return (
-    <div className="fixed inset-0 md:left-20 md:top-0 bg-white dark:bg-black z-10 overflow-hidden">
+    <>
       <div className="h-full flex flex-col">
-        <div className="flex-shrink-0 p-4 md:p-6 border-b border-slate-200 dark:border-slate-800">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-            <div>
-              <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Demandas TI</h1>
-              <p className="text-slate-500 dark:text-slate-400 mt-1">
-                Gerencie solicitações e suporte técnico
-              </p>
-            </div>
-            <button
-              onClick={() => {
-                setSelectedDemand(null);
-                setIsModalOpen(true);
-              }}
-              className="flex items-center justify-center px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors whitespace-nowrap"
-            >
-              <Plus size={20} className="mr-2" />
-              Nova Demanda
-            </button>
+        <div className="mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Demandas TI</h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-1">
+              Gerencie solicitações e suporte técnico
+            </p>
           </div>
+          <button
+            onClick={() => {
+              setSelectedDemand(null);
+              setIsModalOpen(true);
+            }}
+            className="flex items-center justify-center px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors whitespace-nowrap"
+          >
+            <Plus size={20} className="mr-2" />
+            Nova Demanda
+          </button>
         </div>
 
-        <div className="flex-1 overflow-x-auto overflow-y-hidden">
+        <div className="flex-1 -mx-4 md:-mx-6 px-4 md:px-6 overflow-x-auto">
           <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-            <div className="h-full flex gap-4 p-4 md:p-6">
+            <div className="flex gap-4 pb-4 min-h-[calc(100vh-250px)]">
               {columns.map(column => {
                 const columnDemands = getDemandsByStatus(column.id);
 
@@ -243,9 +241,9 @@ export const ITDemandsPage: React.FC = () => {
                   <div
                     key={column.id}
                     id={column.id}
-                    className="flex-shrink-0 w-80 bg-slate-50 dark:bg-slate-900 rounded-lg p-4 flex flex-col h-full"
+                    className="flex-shrink-0 w-80 bg-slate-50 dark:bg-slate-900 rounded-lg p-4 flex flex-col max-h-[calc(100vh-250px)]"
                   >
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center justify-between mb-4 flex-shrink-0">
                       <div className="flex items-center">
                         <div
                           className="w-3 h-3 rounded-full mr-2"
@@ -261,7 +259,7 @@ export const ITDemandsPage: React.FC = () => {
                     </div>
 
                     <SortableContext items={columnDemands.map(d => d.id)} strategy={verticalListSortingStrategy}>
-                      <div className="space-y-3 overflow-y-auto flex-1 pr-2">
+                      <div className="space-y-3 overflow-y-auto flex-1 pr-2 -mr-2">
                         {columnDemands.map((demand) => (
                           <DemandCard
                             key={demand.id}
@@ -285,18 +283,18 @@ export const ITDemandsPage: React.FC = () => {
             </div>
           </DndContext>
         </div>
-
-        {isModalOpen && (
-          <ITDemandModal
-            isOpen={isModalOpen}
-            onClose={() => {
-              setIsModalOpen(false);
-              setSelectedDemand(null);
-            }}
-            demand={selectedDemand}
-          />
-        )}
       </div>
-    </div>
+
+      {isModalOpen && (
+        <ITDemandModal
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedDemand(null);
+          }}
+          demand={selectedDemand}
+        />
+      )}
+    </>
   );
 };
