@@ -18,7 +18,10 @@ router.get('/', authMiddleware, checkRole(['Admin']), async (req, res) => {
         requester_email,
         requester_id,
         urgency,
+        priority,
         status,
+        due_date,
+        assignees,
         created_at,
         updated_at
       FROM it_demands
@@ -67,7 +70,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
 // POST /api/it-demands - Create new IT demand (All authenticated users)
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { title, description, urgency } = req.body;
+    const { title, description, urgency, priority, dueDate, assignees } = req.body;
 
     // Validate required fields
     if (!title || !description || !urgency) {
@@ -80,11 +83,29 @@ router.post('/', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'Urgência inválida' });
     }
 
+    // Validate priority if provided
+    if (priority) {
+      const validPriorities = ['Baixa', 'Normal', 'Alta', 'Urgente'];
+      if (!validPriorities.includes(priority)) {
+        return res.status(400).json({ error: 'Prioridade inválida' });
+      }
+    }
+
     const result = await pool.query(
-      `INSERT INTO it_demands (title, description, requester_name, requester_email, requester_id, urgency, status)
-       VALUES ($1, $2, $3, $4, $5, $6, 'backlog')
+      `INSERT INTO it_demands (title, description, requester_name, requester_email, requester_id, urgency, priority, status, due_date, assignees)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 'backlog', $8, $9)
        RETURNING *`,
-      [title, description, req.user.name, req.user.email, req.user.id, urgency]
+      [
+        title,
+        description,
+        req.user.name,
+        req.user.email,
+        req.user.id,
+        urgency,
+        priority || 'Normal',
+        dueDate || null,
+        assignees ? JSON.stringify(assignees) : '[]'
+      ]
     );
 
     const newDemand = result.rows[0];

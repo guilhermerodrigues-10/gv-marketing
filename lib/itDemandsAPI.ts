@@ -8,7 +8,11 @@ export interface ITDemand {
   requesterEmail: string;
   requesterId?: string;
   urgency: 'Baixa' | 'Média' | 'Alta' | 'Crítica';
+  priority?: 'Baixa' | 'Normal' | 'Alta' | 'Urgente';
   status: string;
+  dueDate?: string;
+  assignees?: string[];
+  attachments?: any[];
   createdAt: string;
   updatedAt: string;
 }
@@ -17,6 +21,9 @@ export interface CreateITDemandInput {
   title: string;
   description: string;
   urgency: 'Baixa' | 'Média' | 'Alta' | 'Crítica';
+  priority?: 'Baixa' | 'Normal' | 'Alta' | 'Urgente';
+  dueDate?: string;
+  assignees?: string[];
 }
 
 export const itDemandsAPI = {
@@ -31,7 +38,11 @@ export const itDemandsAPI = {
       requesterEmail: demand.requester_email,
       requesterId: demand.requester_id,
       urgency: demand.urgency,
+      priority: demand.priority,
       status: demand.status,
+      dueDate: demand.due_date,
+      assignees: demand.assignees,
+      attachments: demand.attachments,
       createdAt: demand.created_at,
       updatedAt: demand.updated_at
     }));
@@ -49,7 +60,11 @@ export const itDemandsAPI = {
       requesterEmail: demand.requester_email,
       requesterId: demand.requester_id,
       urgency: demand.urgency,
+      priority: demand.priority,
       status: demand.status,
+      dueDate: demand.due_date,
+      assignees: demand.assignees,
+      attachments: demand.attachments,
       createdAt: demand.created_at,
       updatedAt: demand.updated_at
     };
@@ -67,7 +82,11 @@ export const itDemandsAPI = {
       requesterEmail: demand.requester_email,
       requesterId: demand.requester_id,
       urgency: demand.urgency,
+      priority: demand.priority,
       status: demand.status,
+      dueDate: demand.due_date,
+      assignees: demand.assignees,
+      attachments: demand.attachments,
       createdAt: demand.created_at,
       updatedAt: demand.updated_at
     };
@@ -85,7 +104,11 @@ export const itDemandsAPI = {
       requesterEmail: demand.requester_email,
       requesterId: demand.requester_id,
       urgency: demand.urgency,
+      priority: demand.priority,
       status: demand.status,
+      dueDate: demand.due_date,
+      assignees: demand.assignees,
+      attachments: demand.attachments,
       createdAt: demand.created_at,
       updatedAt: demand.updated_at
     };

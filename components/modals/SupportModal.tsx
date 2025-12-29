@@ -15,8 +15,6 @@ export const SupportModal: React.FC<SupportModalProps> = ({ isOpen, onClose }) =
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    requesterName: user?.name || '',
-    requesterEmail: user?.email || '',
     urgency: 'Média' as 'Baixa' | 'Média' | 'Alta' | 'Crítica'
   });
 
@@ -48,8 +46,6 @@ export const SupportModal: React.FC<SupportModalProps> = ({ isOpen, onClose }) =
       setFormData({
         title: '',
         description: '',
-        requesterName: user?.name || '',
-        requesterEmail: user?.email || '',
         urgency: 'Média'
       });
 
@@ -61,8 +57,8 @@ export const SupportModal: React.FC<SupportModalProps> = ({ isOpen, onClose }) =
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-800">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-2 sm:p-4">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-md sm:max-w-lg max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-800">
         <div className="flex justify-between items-center p-6 border-b border-slate-200 dark:border-slate-800">
           <div className="flex items-center">
             <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mr-3">
@@ -77,10 +73,13 @@ export const SupportModal: React.FC<SupportModalProps> = ({ isOpen, onClose }) =
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 sm:p-4 mb-4">
             <p className="text-sm text-blue-800 dark:text-blue-400">
               <strong>Precisa de ajuda?</strong> Descreva sua dúvida ou problema e a equipe de TI irá te auxiliar.
+            </p>
+            <p className="text-xs text-blue-600 dark:text-blue-500 mt-1">
+              Solicitante: {user?.name} ({user?.email})
             </p>
           </div>
 
@@ -101,23 +100,6 @@ export const SupportModal: React.FC<SupportModalProps> = ({ isOpen, onClose }) =
             required
           />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              label="Seu Nome"
-              value={formData.requesterName}
-              readOnly
-              className="bg-slate-50 dark:bg-slate-800"
-            />
-
-            <Input
-              label="Seu Email"
-              type="email"
-              value={formData.requesterEmail}
-              readOnly
-              className="bg-slate-50 dark:bg-slate-800"
-            />
-          </div>
-
           <Select
             label="Urgência"
             options={[
@@ -130,11 +112,11 @@ export const SupportModal: React.FC<SupportModalProps> = ({ isOpen, onClose }) =
             onChange={e => setFormData({ ...formData, urgency: e.target.value as any })}
           />
 
-          <div className="flex justify-end space-x-3 pt-4 border-t border-slate-200 dark:border-slate-800">
-            <Button type="button" variant="secondary" onClick={onClose}>
+          <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+            <Button type="button" variant="secondary" onClick={onClose} className="w-full sm:w-auto">
               Cancelar
             </Button>
-            <Button type="submit">
+            <Button type="submit" className="w-full sm:w-auto">
               Enviar Solicitação
             </Button>
           </div>
