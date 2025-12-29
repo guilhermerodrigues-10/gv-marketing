@@ -19,15 +19,15 @@ async function runMigration() {
   const client = await pool.connect();
 
   try {
-    console.log('🔄 Running migration: 002_add_deadline_time.sql...');
+    console.log('🔄 Running migration: 007_create_it_demands.sql...');
 
-    const migrationPath = path.join(__dirname, 'src', 'migrations', '002_add_deadline_time.sql');
+    const migrationPath = path.join(__dirname, 'src', 'migrations', '007_create_it_demands.sql');
     const migrationSQL = fs.readFileSync(migrationPath, 'utf8');
 
     await client.query(migrationSQL);
 
     console.log('✅ Migration completed successfully!');
-    console.log('📋 Tasks table now supports TIMESTAMP for due_date (date + time)');
+    console.log('📋 IT Demands table created with columns: id, title, description, requester info, urgency, status');
   } catch (error) {
     console.error('❌ Migration error:', error);
     throw error;

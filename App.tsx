@@ -14,6 +14,7 @@ import { CalendarPage } from './pages/CalendarPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { AssetsPage } from './pages/AssetsPage';
+import { ITDemandsPage } from './pages/ITDemandsPage';
 import { testSupabaseConnection } from './lib/test-supabase';
 
 const ProtectedLayout = () => {
@@ -68,6 +69,7 @@ const AppRoutes = () => {
         <Route path="/assets" element={<AssetsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/reports" element={<ReportsPage />} />
+        <Route path="/it-demands" element={<ITDemandsPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" />} />

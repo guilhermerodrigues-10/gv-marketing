@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { Bell, Search, Moon, Sun, Menu, User as UserIcon, LogOut, Check, RefreshCw } from 'lucide-react';
+import { Bell, Search, Moon, Sun, Menu, User as UserIcon, LogOut, Check, RefreshCw, Phone } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
+import { SupportModal } from '../modals/SupportModal';
 
 export const Header: React.FC = () => {
   const { user, logout, toggleTheme, isDarkMode, toggleSidebar, notifications, markAsRead, markAllAsRead, refreshData } = useApp();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showSupportModal, setShowSupportModal] = useState(false);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -42,6 +44,15 @@ export const Header: React.FC = () => {
       </div>
 
       <div className="flex items-center space-x-2 md:space-x-4">
+        {/* Support Button */}
+        <button
+          onClick={() => setShowSupportModal(true)}
+          className="p-2 rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          title="Suporte TI"
+        >
+          <Phone size={20} />
+        </button>
+
         {/* Refresh Button */}
         <button
           onClick={handleRefresh}
@@ -136,6 +147,8 @@ export const Header: React.FC = () => {
           )}
         </div>
       </div>
+
+      <SupportModal isOpen={showSupportModal} onClose={() => setShowSupportModal(false)} />
     </header>
   );
 };
