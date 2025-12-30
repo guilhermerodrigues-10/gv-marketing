@@ -199,7 +199,6 @@ export const ITDemandsPage: React.FC = () => {
   const [demands, setDemands] = useState<ITDemand[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Only Admins can access IT Demands
   const isAdmin = user?.role === 'Admin';
@@ -281,28 +280,16 @@ export const ITDemandsPage: React.FC = () => {
   }, [socket, user, isAdmin]);
 
   const loadDemands = async () => {
-    // Prevent multiple simultaneous requests
-    if (isRefreshing) {
-      console.log('⏭️ Skipping reload - already refreshing');
-      return;
-    }
-
     try {
       console.log('🔄 Loading IT demands...');
-      setIsRefreshing(true);
       setIsLoading(true);
       const data = await itDemandsAPI.getAll();
       console.log(`✅ Loaded ${data.length} IT demands:`, data);
       setDemands(data);
-    } catch (error: any) {
+    } catch (error) {
       console.error('❌ Error loading IT demands:', error);
-      if (error?.response?.status === 429) {
-        console.warn('⏳ Rate limited - waiting before next request');
-      }
     } finally {
       setIsLoading(false);
-      // Add small delay before allowing next refresh
-      setTimeout(() => setIsRefreshing(false), 1000);
     }
   };
 

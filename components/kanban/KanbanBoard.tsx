@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { Task, Priority } from '../../types';
 import { TaskCard } from './TaskCard';
@@ -32,11 +32,6 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ projectId }) => {
 
   // Note: WebSocket real-time updates are handled in AppContext
   // Tasks automatically update when created/updated/deleted via WebSocket
-
-  // Log when tasks are updated (for debugging real-time updates)
-  useEffect(() => {
-    console.log(`📊 KanbanBoard: Tasks updated - ${tasks.length} total tasks`);
-  }, [tasks]);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
