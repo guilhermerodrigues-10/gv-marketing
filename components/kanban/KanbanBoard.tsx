@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { Task, Priority } from '../../types';
 import { TaskCard } from './TaskCard';
 import { Plus, Check, Edit2, Trash2, X, Filter } from 'lucide-react';
 import { TaskModal } from '../modals/TaskModal';
-import { useTaskEvents } from '../../lib/useSocket';
 
 interface KanbanBoardProps {
   projectId?: string;
@@ -14,7 +13,6 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ projectId }) => {
   const { tasks, columns, moveTask, setActiveDragTask, addColumn, updateColumn, deleteColumn, projects, user } = useApp();
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [localTasks, setLocalTasks] = useState<Task[]>(tasks);
 
   // Filters
   const [filterPriority, setFilterPriority] = useState<string>('Todas');
@@ -32,29 +30,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ projectId }) => {
 
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
 
-  // Sync local tasks with AppContext tasks
-  useEffect(() => {
-    setLocalTasks(tasks);
-  }, [tasks]);
-
-  // Real-time WebSocket listeners
-  useTaskEvents(
-    // onTaskCreated
-    (newTask: Task) => {
-      console.log('🆕 Task created via WebSocket:', newTask);
-      setLocalTasks(prev => [...prev, newTask]);
-    },
-    // onTaskUpdated
-    (updatedTask: Task) => {
-      console.log('♻️ Task updated via WebSocket:', updatedTask);
-      setLocalTasks(prev => prev.map(t => t.id === updatedTask.id ? updatedTask : t));
-    },
-    // onTaskDeleted
-    (data: { id: string }) => {
-      console.log('🗑️ Task deleted via WebSocket:', data.id);
-      setLocalTasks(prev => prev.filter(t => t.id !== data.id));
-    }
-  );
+  // Note: WebSocket real-time updates are handled in AppContext
+  // Tasks automatically update when created/updated/deleted via WebSocket
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -120,7 +97,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ projectId }) => {
   };
 
   // Filter Logic: Global vs Project Specific vs My Tasks
-  const filteredTasks = localTasks.filter(task => {
+  const filteredTasks = tasks.filter(task => {
     // 1. Mandatory Project Prop (if component is used inside ProjectDetailsPage)
     if (projectId && task.projectId !== projectId) {
       return false;
@@ -139,11 +116,11 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ projectId }) => {
 
     // 3. Priority Filter
     const matchesPriority = filterPriority === 'Todas' || task.priority === filterPriority;
-    
+
     // 4. Search Filter
-    const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           task.description.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     return matchesPriority && matchesSearch;
   });
 
