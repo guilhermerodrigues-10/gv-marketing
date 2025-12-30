@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { Task, Priority } from '../../types';
 import { TaskCard } from './TaskCard';
@@ -11,6 +11,11 @@ interface KanbanBoardProps {
 
 export const KanbanBoard: React.FC<KanbanBoardProps> = ({ projectId }) => {
   const { tasks, columns, moveTask, setActiveDragTask, addColumn, updateColumn, deleteColumn, projects, user } = useApp();
+
+  // Log when tasks change for debugging
+  useEffect(() => {
+    console.log(`📊 KanbanBoard: Tasks updated - ${tasks.length} total tasks`);
+  }, [tasks]);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
