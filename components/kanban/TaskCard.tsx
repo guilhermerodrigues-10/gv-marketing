@@ -2,6 +2,7 @@ import React from 'react';
 import { Clock, MessageSquare, Paperclip, MoreHorizontal, Play, Pause, Calendar } from 'lucide-react';
 import { Task, Priority } from '../../types';
 import { useApp } from '../../contexts/AppContext';
+import { Avatar } from '../ui/Avatar';
 
 interface TaskCardProps {
   task: Task;
@@ -9,7 +10,7 @@ interface TaskCardProps {
 }
 
 export const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit }) => {
-  const { setActiveDragTask, toggleTimeTracking, projects } = useApp();
+  const { setActiveDragTask, toggleTimeTracking, projects, users } = useApp();
   
   const handleDragStart = (e: React.DragEvent) => {
     e.dataTransfer.setData('text/plain', task.id);
@@ -100,13 +101,16 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit }) => {
 
       <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-100 dark:border-slate-700">
         <div className="flex items-center space-x-2">
-          {/* Mock Avatars */}
+          {/* User Avatars with Initials */}
           <div className="flex -space-x-2">
-            {task.assignees.map((userId, idx) => (
-               <div key={idx} className="w-6 h-6 rounded-full bg-slate-200 border-2 border-white dark:border-slate-800 flex items-center justify-center text-[10px] overflow-hidden">
-                 <img src={`https://picsum.photos/32/32?random=${userId}`} alt="User" />
-               </div>
-            ))}
+            {task.assignees.map((userId) => {
+              const user = users.find(u => u.id === userId);
+              return user ? (
+                <div key={userId} className="border-2 border-white dark:border-slate-800 rounded-full">
+                  <Avatar name={user.name} avatarUrl={user.avatarUrl} size="sm" />
+                </div>
+              ) : null;
+            })}
           </div>
         </div>
 
