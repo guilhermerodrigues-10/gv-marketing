@@ -4,6 +4,7 @@ import { useApp } from '../../contexts/AppContext';
 import { Task, Priority, Attachment } from '../../types';
 import { Button } from '../ui/Button';
 import { Input, Textarea, Select } from '../ui/Input';
+import { Avatar } from '../ui/Avatar';
 import { assetsAPI } from '../../lib/api';
 import { useSocket } from '../../lib/useSocket';
 
@@ -510,7 +511,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
                     const u = users.find(user => user.id === id);
                     return u ? (
                       <span key={id} className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                        <img src={u.avatarUrl} alt="" className="h-4 w-4 rounded-full mr-1" />
+                        <Avatar name={u.name} avatarUrl={u.avatarUrl} size="xs" className="mr-1" />
                         {u.name}
                         <button
                           type="button"
@@ -540,7 +541,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
                         }}
                       >
                         <div className="flex items-center">
-                          <img src={u.avatarUrl} alt="" className="h-6 w-6 flex-shrink-0 rounded-full mr-2" />
+                          <Avatar name={u.name} avatarUrl={u.avatarUrl} size="sm" className="mr-2" />
                           <span className="font-normal block truncate">{u.name}</span>
                         </div>
                         {formData.assignees?.includes(u.id) && (
