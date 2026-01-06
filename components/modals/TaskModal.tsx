@@ -35,6 +35,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [showAssigneeDropdown, setShowAssigneeDropdown] = useState(false);
+  const [assigneeSearchQuery, setAssigneeSearchQuery] = useState('');
 
   // Store pending files to upload after task creation
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
@@ -488,46 +489,72 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
                </div>
             </div>
 
-            {/* Custom Multi-Select for Assignees */}
+            {/* Custom Multi-Select for Assignees with Search */}
             <div className="col-span-2 relative">
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Responsáveis</label>
-              <div 
-                className="w-full rounded-lg border border-slate-300 bg-white dark:bg-slate-900 dark:border-slate-700 px-3 py-2 text-sm cursor-pointer min-h-[42px] flex flex-wrap gap-1"
-                onClick={() => setShowAssigneeDropdown(!showAssigneeDropdown)}
-              >
-                {formData.assignees && formData.assignees.length > 0 ? (
-                  formData.assignees.map(id => {
+
+              {/* Search Input */}
+              <input
+                type="text"
+                placeholder="Digite o nome do responsável..."
+                value={assigneeSearchQuery}
+                onChange={(e) => setAssigneeSearchQuery(e.target.value)}
+                onFocus={() => setShowAssigneeDropdown(true)}
+                className="w-full rounded-lg border border-slate-300 bg-white dark:bg-slate-900 dark:border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-white"
+              />
+
+              {/* Selected Assignees Tags */}
+              {formData.assignees && formData.assignees.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {formData.assignees.map(id => {
                     const u = users.find(user => user.id === id);
                     return u ? (
-                      <span key={id} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                      <span key={id} className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                        <img src={u.avatarUrl} alt="" className="h-4 w-4 rounded-full mr-1" />
                         {u.name}
+                        <button
+                          type="button"
+                          onClick={() => toggleAssignee(u.id)}
+                          className="ml-1 hover:text-blue-600 dark:hover:text-blue-400"
+                        >
+                          <X size={12} />
+                        </button>
                       </span>
                     ) : null;
-                  })
-                ) : (
-                  <span className="text-slate-400">Selecione responsáveis...</span>
-                )}
-              </div>
-              
+                  })}
+                </div>
+              )}
+
+              {/* Dropdown with filtered results */}
               {showAssigneeDropdown && (
                 <div className="absolute z-10 mt-1 w-full bg-white dark:bg-slate-800 shadow-lg max-h-48 rounded-md py-1 text-base ring-1 ring-slate-200 dark:ring-slate-700 overflow-auto focus:outline-none sm:text-sm border border-slate-200 dark:border-slate-700">
-                  {users.map(u => (
-                    <div 
-                      key={u.id}
-                      className="cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-900 dark:text-white"
-                      onClick={() => toggleAssignee(u.id)}
-                    >
-                      <div className="flex items-center">
-                        <img src={u.avatarUrl} alt="" className="h-6 w-6 flex-shrink-0 rounded-full mr-2" />
-                        <span className="font-normal block truncate">{u.name}</span>
+                  {users
+                    .filter(u => u.name.toLowerCase().includes(assigneeSearchQuery.toLowerCase()))
+                    .map(u => (
+                      <div
+                        key={u.id}
+                        className="cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-900 dark:text-white"
+                        onClick={() => {
+                          toggleAssignee(u.id);
+                          setAssigneeSearchQuery('');
+                        }}
+                      >
+                        <div className="flex items-center">
+                          <img src={u.avatarUrl} alt="" className="h-6 w-6 flex-shrink-0 rounded-full mr-2" />
+                          <span className="font-normal block truncate">{u.name}</span>
+                        </div>
+                        {formData.assignees?.includes(u.id) && (
+                          <span className="text-primary-500 absolute inset-y-0 right-0 flex items-center pr-4">
+                            <Check size={16} />
+                          </span>
+                        )}
                       </div>
-                      {formData.assignees?.includes(u.id) && (
-                        <span className="text-primary-500 absolute inset-y-0 right-0 flex items-center pr-4">
-                          <Check size={16} />
-                        </span>
-                      )}
+                    ))}
+                  {users.filter(u => u.name.toLowerCase().includes(assigneeSearchQuery.toLowerCase())).length === 0 && (
+                    <div className="py-2 pl-3 text-slate-400 text-sm">
+                      Nenhum responsável encontrado
                     </div>
-                  ))}
+                  )}
                 </div>
               )}
             </div>

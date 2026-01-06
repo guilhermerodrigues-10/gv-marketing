@@ -29,6 +29,18 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit }) => {
     return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
   };
 
+  const formatDateTime = (dateString: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   const getDateColor = (dateString: string) => {
     if (!dateString) return '';
     const dueDate = new Date(dateString);
@@ -70,7 +82,15 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit }) => {
       <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-1 leading-tight group-hover:text-primary-500 dark:group-hover:text-primary-500 transition-colors">
         {task.title}
       </h4>
-      
+
+      {/* Created At Timestamp */}
+      {task.createdAt && (
+        <div className="flex items-center text-xs text-slate-400 dark:text-slate-500 mb-2">
+          <Clock size={12} className="mr-1" />
+          Criada em {formatDateTime(task.createdAt)}
+        </div>
+      )}
+
       {project && (
         <div className="flex items-center mb-3">
           <span className={`w-2 h-2 rounded-full mr-2 ${project.color}`}></span>
