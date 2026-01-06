@@ -185,7 +185,7 @@ router.put('/:id', authMiddleware, checkRole(['Admin']), async (req, res) => {
     const { status } = req.body;
 
     // Validate status
-    const validStatuses = ['backlog', 'em-analise', 'em-desenvolvimento', 'em-teste', 'concluido'];
+    const validStatuses = ['backlog', 'em-analise', 'bloqueado', 'em-desenvolvimento', 'em-teste', 'concluido'];
     if (status && !validStatuses.includes(status)) {
       return res.status(400).json({ error: 'Status inválido' });
     }
