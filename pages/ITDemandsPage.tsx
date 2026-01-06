@@ -237,6 +237,7 @@ export const ITDemandsPage: React.FC = () => {
   const [columns] = useState([
     { id: 'backlog', title: 'Backlog', color: '#64748b' },
     { id: 'em-analise', title: 'Em Análise', color: '#3b82f6' },
+    { id: 'bloqueado', title: 'Bloqueado/Aguardando', color: '#ef4444' },
     { id: 'em-desenvolvimento', title: 'Em Desenvolvimento', color: '#f59e0b' },
     { id: 'em-teste', title: 'Em Teste', color: '#8b5cf6' },
     { id: 'concluido', title: 'Concluído', color: '#10b981' }
