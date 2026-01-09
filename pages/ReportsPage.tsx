@@ -27,6 +27,32 @@ const isWithinRange = (date: string, startDate: string, endDate: string): boolea
   return date >= startDate && date <= endDate;
 };
 
+// Helper: Map IT demand status IDs to display titles
+const getITDemandStatusTitle = (status: string): string => {
+  const statusMap: Record<string, string> = {
+    'backlog': 'BACKLOG',
+    'em-analise': 'EM ANÁLISE',
+    'bloqueado': 'BLOQUEADO/AGUARDANDO',
+    'em-desenvolvimento': 'EM DESENVOLVIMENTO',
+    'em-teste': 'EM TESTE',
+    'concluido': 'CONCLUÍDO'
+  };
+  return statusMap[status] || status.toUpperCase();
+};
+
+// Helper: Map task status IDs to display titles
+const getTaskStatusTitle = (status: string): string => {
+  const statusMap: Record<string, string> = {
+    'Backlog': 'BACKLOG',
+    'A Fazer': 'A FAZER',
+    'Em Progresso': 'EM PROGRESSO',
+    'Revisão': 'REVISÃO',
+    'Concluído': 'CONCLUÍDO',
+    'done': 'CONCLUÍDO'
+  };
+  return statusMap[status] || status.toUpperCase();
+};
+
 export const ReportsPage: React.FC = () => {
   const { tasks, users } = useApp();
 
@@ -266,7 +292,7 @@ export const ReportsPage: React.FC = () => {
                           <div className="flex-1">
                             <div className="font-medium text-slate-900 dark:text-white">{task.title}</div>
                             <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                              Criada em: {new Date(task.createdAt).toLocaleDateString('pt-BR')} | Status: {task.status}
+                              Criada em: {new Date(task.createdAt).toLocaleDateString('pt-BR')} | Status: {getTaskStatusTitle(task.status)}
                             </div>
                           </div>
                           <div className="text-xs text-yellow-600 dark:text-yellow-400 font-medium">
@@ -327,7 +353,7 @@ export const ReportsPage: React.FC = () => {
                           <div className="flex-1">
                             <div className="font-medium text-slate-900 dark:text-white">{demand.title}</div>
                             <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                              Criada em: {new Date(demand.createdAt).toLocaleDateString('pt-BR')} | Status: {demand.status}
+                              Criada em: {new Date(demand.createdAt).toLocaleDateString('pt-BR')} | Status: {getITDemandStatusTitle(demand.status)}
                             </div>
                           </div>
                           <div className="text-xs text-yellow-600 dark:text-yellow-400 font-medium">
