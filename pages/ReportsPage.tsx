@@ -51,16 +51,16 @@ const getTaskStatusTitle = (status: string): string => {
     'Concluído': 'CONCLUÍDO',
     'done': 'CONCLUÍDO',
 
-    // Colunas customizadas do Kanban (baseado na tabela fornecida)
+    // Colunas customizadas do Kanban (baseado na tabela board_columns)
     'arte_a_fazer': 'ARTE A FAZER',
     'arte_em_andamento': 'ARTE EM ANDAMENTO',
     'backlog': 'ENTRADAS',
-    'edição_de_video_em_andamento': 'CONCLUÍDO',
+    'concluido': 'CONCLUÍDO',
     'em_aprovação': 'EM APROVAÇÃO',
     'enviar_para_aprovação': 'ENVIAR PARA APROVAÇÃO',
     'publicar': 'PUBLICAR',
-    'texto_a_fazer': 'TRÁFEGO',
     'texto_em_andamento': 'TEXTO A FAZER',
+    'trafego7': 'TRÁFEGO',
     'video_a_editar': 'VÍDEO A EDITAR',
     'video_a_gravar': 'VÍDEO A GRAVAR',
     'video_em_edição': 'VÍDEO EM EDIÇÃO'
@@ -118,12 +118,12 @@ export const ReportsPage: React.FC = () => {
       const completedTasks = userTasks.filter(task =>
         task.status === 'Concluído' ||
         task.status === 'done' ||
-        task.status === 'edição_de_video_em_andamento'
+        task.status === 'concluido'
       );
       const pendingTasks = userTasks.filter(task =>
         task.status !== 'Concluído' &&
         task.status !== 'done' &&
-        task.status !== 'edição_de_video_em_andamento'
+        task.status !== 'concluido'
       );
 
       // IT demands - special case for guilherme@gvmarketing.us
