@@ -83,10 +83,10 @@ export const ReportsPage: React.FC = () => {
       let pendingITDemands: ITDemand[] = [];
 
       if (user.email === 'guilherme@gvmarketing.us') {
-        // Show ALL completed IT demands
+        // Show ALL IT demands (completed and pending)
         completedITDemands = filteredITDemands.filter(demand => demand.status === 'concluido');
-        pendingITDemands = []; // Admin doesn't track pending IT demands in this view
-        userITDemands = completedITDemands;
+        pendingITDemands = filteredITDemands.filter(demand => demand.status !== 'concluido');
+        userITDemands = filteredITDemands;
       } else {
         // For other users, show IT demands assigned to them
         userITDemands = filteredITDemands.filter(demand =>
@@ -286,7 +286,7 @@ export const ReportsPage: React.FC = () => {
                 <h4 className="text-md font-semibold text-slate-900 dark:text-white mb-4">
                   Demandas TI ({userITStats.total})
                   {user.email === 'guilherme@gvmarketing.us' && (
-                    <span className="ml-2 text-xs text-primary-500">(Todas as demandas concluídas)</span>
+                    <span className="ml-2 text-xs text-primary-500">(Todas as demandas TI)</span>
                   )}
                 </h4>
 
