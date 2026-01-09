@@ -43,12 +43,27 @@ const getITDemandStatusTitle = (status: string): string => {
 // Helper: Map task status IDs to display titles
 const getTaskStatusTitle = (status: string): string => {
   const statusMap: Record<string, string> = {
+    // Status padrão
     'Backlog': 'BACKLOG',
     'A Fazer': 'A FAZER',
     'Em Progresso': 'EM PROGRESSO',
     'Revisão': 'REVISÃO',
     'Concluído': 'CONCLUÍDO',
-    'done': 'CONCLUÍDO'
+    'done': 'CONCLUÍDO',
+
+    // IDs de status do banco de dados - mapeamento correto
+    'arte_a_fazer': 'ARTE A FAZER',
+    'arte_em_andamento': 'ARTE EM ANDAMENTO',
+    'backlog': 'ENTRADAS',
+    'edição_de_video_em_andamento': 'CONCLUÍDO',
+    'em_aprovação': 'EM APROVAÇÃO',
+    'enviar_para_aprovação': 'ENVIAR PARA APROVAÇÃO',
+    'publicar': 'PUBLICAR',
+    'texto_a_fazer': 'TRÁFEGO',
+    'texto_em_andamento': 'TEXTO A FAZER',
+    'video_a_editar': 'VÍDEO A EDITAR',
+    'video_a_gravar': 'VÍDEO A GRAVAR',
+    'video_em_edição': 'VÍDEO EM EDIÇÃO'
   };
   return statusMap[status] || status.toUpperCase();
 };
