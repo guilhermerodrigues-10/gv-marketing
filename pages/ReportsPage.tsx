@@ -115,8 +115,16 @@ export const ReportsPage: React.FC = () => {
     return users.map(user => {
       // Regular tasks
       const userTasks = filteredTasks.filter(task => task.assignees.includes(user.id));
-      const completedTasks = userTasks.filter(task => task.status === 'Concluído' || task.status === 'done');
-      const pendingTasks = userTasks.filter(task => task.status !== 'Concluído' && task.status !== 'done');
+      const completedTasks = userTasks.filter(task =>
+        task.status === 'Concluído' ||
+        task.status === 'done' ||
+        task.status === 'edição_de_video_em_andamento'
+      );
+      const pendingTasks = userTasks.filter(task =>
+        task.status !== 'Concluído' &&
+        task.status !== 'done' &&
+        task.status !== 'edição_de_video_em_andamento'
+      );
 
       // IT demands - special case for guilherme@gvmarketing.us
       let userITDemands: ITDemand[] = [];
