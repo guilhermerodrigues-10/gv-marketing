@@ -218,7 +218,7 @@ router.put('/:id', authMiddleware, checkRole(['Admin']), async (req, res) => {
          priority = COALESCE($5, priority),
          due_date = COALESCE($6, due_date),
          assignees = COALESCE($7, assignees),
-         project_id = COALESCE(NULLIF($8, ''), project_id),
+         project_id = COALESCE($8, project_id),
          updated_at = CURRENT_TIMESTAMP
        WHERE id = $9
        RETURNING *`,
