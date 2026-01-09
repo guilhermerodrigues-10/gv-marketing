@@ -222,7 +222,7 @@ router.put('/:id', authMiddleware, checkRole(['Admin']), async (req, res) => {
          updated_at = CURRENT_TIMESTAMP
        WHERE id = $9
        RETURNING *`,
-      [title, description, status, urgency, priority, dueDate, assignees ? JSON.stringify(assignees) : null, projectId, req.params.id]
+      [title, description, status, urgency, priority, dueDate, assignees && assignees.length > 0 ? JSON.stringify(assignees) : null, projectId, req.params.id]
     );
 
     if (result.rows.length === 0) {
