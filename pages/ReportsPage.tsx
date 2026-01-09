@@ -115,6 +115,13 @@ export const ReportsPage: React.FC = () => {
     return users.map(user => {
       // Regular tasks
       const userTasks = filteredTasks.filter(task => task.assignees.includes(user.id));
+
+      // Debug: log all unique statuses
+      if (user.email === 'lorena@gvmarketing.us') {
+        const statuses = new Set(userTasks.map(t => t.status));
+        console.log('Lorena statuses:', Array.from(statuses));
+      }
+
       const completedTasks = userTasks.filter(task =>
         task.status === 'Concluído' ||
         task.status === 'done' ||
