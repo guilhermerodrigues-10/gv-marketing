@@ -24,6 +24,18 @@ export interface CreateITDemandInput {
   priority?: 'Baixa' | 'Normal' | 'Alta' | 'Urgente';
   dueDate?: string;
   assignees?: string[];
+  projectId?: string;
+}
+
+export interface UpdateITDemandInput {
+  title?: string;
+  description?: string;
+  status?: string;
+  urgency?: 'Baixa' | 'Média' | 'Alta' | 'Crítica';
+  priority?: 'Baixa' | 'Normal' | 'Alta' | 'Urgente';
+  dueDate?: string;
+  assignees?: string[];
+  projectId?: string;
 }
 
 export const itDemandsAPI = {
@@ -95,6 +107,28 @@ export const itDemandsAPI = {
   // Update IT demand status (Admin only)
   updateStatus: async (id: string, status: string): Promise<ITDemand> => {
     const response = await api.put(`/it-demands/${id}`, { status });
+    const demand = response.data;
+    return {
+      id: demand.id,
+      title: demand.title,
+      description: demand.description,
+      requesterName: demand.requester_name,
+      requesterEmail: demand.requester_email,
+      requesterId: demand.requester_id,
+      urgency: demand.urgency,
+      priority: demand.priority,
+      status: demand.status,
+      dueDate: demand.due_date,
+      assignees: demand.assignees,
+      attachments: demand.attachments,
+      createdAt: demand.created_at,
+      updatedAt: demand.updated_at
+    };
+  },
+
+  // Update IT demand (full update - Admin only)
+  update: async (id: string, data: UpdateITDemandInput): Promise<ITDemand> => {
+    const response = await api.put(`/it-demands/${id}`, data);
     const demand = response.data;
     return {
       id: demand.id,

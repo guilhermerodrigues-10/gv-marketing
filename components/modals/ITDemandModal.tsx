@@ -15,7 +15,7 @@ interface ITDemandModalProps {
 }
 
 export const ITDemandModal: React.FC<ITDemandModalProps> = ({ isOpen, onClose, demand }) => {
-  const { user, users } = useApp();
+  const { user, users, projects } = useApp();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
@@ -25,6 +25,7 @@ export const ITDemandModal: React.FC<ITDemandModalProps> = ({ isOpen, onClose, d
     priority: 'Normal' as 'Baixa' | 'Normal' | 'Alta' | 'Urgente',
     urgency: 'Média' as 'Baixa' | 'Média' | 'Alta' | 'Crítica',
     dueDate: '',
+    projectId: '',
     assignees: [] as string[],
     attachments: [] as Attachment[]
   });
@@ -47,6 +48,7 @@ export const ITDemandModal: React.FC<ITDemandModalProps> = ({ isOpen, onClose, d
         priority: (demand as any).priority || 'Normal',
         urgency: demand.urgency,
         dueDate: (demand as any).dueDate ? new Date((demand as any).dueDate).toISOString().slice(0, 16) : '',
+        projectId: (demand as any).projectId || '',
         assignees: (demand as any).assignees || [],
         attachments: (demand as any).attachments || []
       });
@@ -59,11 +61,12 @@ export const ITDemandModal: React.FC<ITDemandModalProps> = ({ isOpen, onClose, d
         priority: 'Normal',
         urgency: 'Média',
         dueDate: '',
+        projectId: projects.length > 0 ? projects[0].id : '',
         assignees: [],
         attachments: []
       });
     }
-  }, [demand, isOpen]);
+  }, [demand, isOpen, projects]);
 
   if (!isOpen) return null;
 
@@ -83,14 +86,27 @@ export const ITDemandModal: React.FC<ITDemandModalProps> = ({ isOpen, onClose, d
     try {
       if (demand?.id) {
         // UPDATE existing demand (Admin only)
-        await itDemandsAPI.updateStatus(demand.id, formData.status);
+        await itDemandsAPI.update(demand.id, {
+          title: formData.title,
+          description: formData.description,
+          status: formData.status,
+          urgency: formData.urgency,
+          priority: formData.priority,
+          dueDate: formData.dueDate || undefined,
+          assignees: formData.assignees,
+          projectId: formData.projectId || undefined
+        });
         alert('Demanda atualizada com sucesso!');
       } else {
         // CREATE new demand
         const newDemand = await itDemandsAPI.create({
           title: formData.title,
           description: formData.description,
-          urgency: formData.urgency
+          urgency: formData.urgency,
+          priority: formData.priority,
+          dueDate: formData.dueDate || undefined,
+          assignees: formData.assignees,
+          projectId: formData.projectId || undefined
         });
 
         // Upload pending files if any
@@ -247,6 +263,20 @@ export const ITDemandModal: React.FC<ITDemandModalProps> = ({ isOpen, onClose, d
               disabled={isViewMode}
             />
 
+            {/* Project Selection */}
+            {projects.length > 0 && (
+              <Select
+                label="Projeto Relacionado"
+                options={[
+                  { label: 'Nenhum projeto', value: '' },
+                  ...projects.map(p => ({ label: p.name, value: p.id }))
+                ]}
+                value={formData.projectId}
+                onChange={e => setFormData({ ...formData, projectId: e.target.value })}
+                disabled={isViewMode}
+              />
+            )}
+
             {/* Status (Admin only) */}
             {canEdit && demand && (
               <Select
@@ -254,6 +284,7 @@ export const ITDemandModal: React.FC<ITDemandModalProps> = ({ isOpen, onClose, d
                 options={[
                   { label: 'Backlog', value: 'backlog' },
                   { label: 'Em Análise', value: 'em-analise' },
+                  { label: 'Bloqueado/Aguardando', value: 'bloqueado' },
                   { label: 'Em Desenvolvimento', value: 'em-desenvolvimento' },
                   { label: 'Em Teste', value: 'em-teste' },
                   { label: 'Concluído', value: 'concluido' }

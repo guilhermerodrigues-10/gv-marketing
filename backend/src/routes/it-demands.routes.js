@@ -182,20 +182,47 @@ router.post('/', authMiddleware, async (req, res) => {
 // PUT /api/it-demands/:id - Update IT demand (Admin only)
 router.put('/:id', authMiddleware, checkRole(['Admin']), async (req, res) => {
   try {
-    const { status } = req.body;
+    const { title, description, status, urgency, priority, dueDate, assignees, projectId } = req.body;
 
-    // Validate status
-    const validStatuses = ['backlog', 'em-analise', 'bloqueado', 'em-desenvolvimento', 'em-teste', 'concluido'];
-    if (status && !validStatuses.includes(status)) {
-      return res.status(400).json({ error: 'Status inválido' });
+    // Validate status if provided
+    if (status) {
+      const validStatuses = ['backlog', 'em-analise', 'bloqueado', 'em-desenvolvimento', 'em-teste', 'concluido'];
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({ error: 'Status inválido' });
+      }
+    }
+
+    // Validate urgency if provided
+    if (urgency) {
+      const validUrgencies = ['Baixa', 'Média', 'Alta', 'Crítica'];
+      if (!validUrgencies.includes(urgency)) {
+        return res.status(400).json({ error: 'Urgência inválida' });
+      }
+    }
+
+    // Validate priority if provided
+    if (priority) {
+      const validPriorities = ['Baixa', 'Normal', 'Alta', 'Urgente'];
+      if (!validPriorities.includes(priority)) {
+        return res.status(400).json({ error: 'Prioridade inválida' });
+      }
     }
 
     const result = await pool.query(
       `UPDATE it_demands
-       SET status = COALESCE($1, status), updated_at = CURRENT_TIMESTAMP
-       WHERE id = $2
+       SET
+         title = COALESCE($1, title),
+         description = COALESCE($2, description),
+         status = COALESCE($3, status),
+         urgency = COALESCE($4, urgency),
+         priority = COALESCE($5, priority),
+         due_date = COALESCE($6, due_date),
+         assignees = COALESCE($7, assignees),
+         project_id = COALESCE($8, project_id),
+         updated_at = CURRENT_TIMESTAMP
+       WHERE id = $9
        RETURNING *`,
-      [status, req.params.id]
+      [title, description, status, urgency, priority, dueDate, assignees ? JSON.stringify(assignees) : null, projectId, req.params.id]
     );
 
     if (result.rows.length === 0) {
