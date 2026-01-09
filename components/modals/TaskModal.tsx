@@ -41,6 +41,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
   // Store pending files to upload after task creation
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Permissions
   const canDeleteTask = user?.role === 'Admin' || user?.role === 'Gerente';
@@ -170,6 +171,9 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Prevent double submission
+    if (isSaving) return;
+
     // Validate required fields
     if (!formData.title?.trim()) {
       alert('Por favor, preencha o título da tarefa');
@@ -181,41 +185,43 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
       return;
     }
 
-    // Convert Hours/Minutes/Seconds back to total seconds
-    const totalSeconds = (Number(timeSpent.hours) * 3600) + (Number(timeSpent.minutes) * 60) + Number(timeSpent.seconds);
+    setIsSaving(true);
 
-    if (initialTask?.id) {
-      // UPDATE: include all fields including timeTracked and isTracking
-      const updateData = {
-        title: formData.title,
-        description: formData.description || '',
-        status: formData.status,
-        priority: formData.priority,
-        dueDate: formData.dueDate && formData.dueDate !== '' ? new Date(formData.dueDate).toISOString() : null,
-        projectId: formData.projectId,
-        assignees: formData.assignees || [],
-        subtasks: formData.subtasks || [],
-        tags: formData.tags || [],
-        timeTracked: totalSeconds,
-        isTracking: isTimerRunning
-      };
-      await updateTask(initialTask.id, updateData);
-      onClose();
-    } else {
-      // CREATE: exclude timeTracked (will be 0 by default)
-      const createData = {
-        title: formData.title!,
-        description: formData.description || '',
-        status: formData.status!,
-        priority: formData.priority!,
-        dueDate: formData.dueDate && formData.dueDate !== '' ? new Date(formData.dueDate).toISOString() : null,
-        projectId: formData.projectId!,
-        assignees: formData.assignees || [],
-        subtasks: formData.subtasks || [],
-        tags: formData.tags || []
-      };
+    try {
+      // Convert Hours/Minutes/Seconds back to total seconds
+      const totalSeconds = (Number(timeSpent.hours) * 3600) + (Number(timeSpent.minutes) * 60) + Number(timeSpent.seconds);
 
-      try {
+      if (initialTask?.id) {
+        // UPDATE: include all fields including timeTracked and isTracking
+        const updateData = {
+          title: formData.title,
+          description: formData.description || '',
+          status: formData.status,
+          priority: formData.priority,
+          dueDate: formData.dueDate && formData.dueDate !== '' ? new Date(formData.dueDate).toISOString() : null,
+          projectId: formData.projectId,
+          assignees: formData.assignees || [],
+          subtasks: formData.subtasks || [],
+          tags: formData.tags || [],
+          timeTracked: totalSeconds,
+          isTracking: isTimerRunning
+        };
+        await updateTask(initialTask.id, updateData);
+        onClose();
+      } else {
+        // CREATE: exclude timeTracked (will be 0 by default)
+        const createData = {
+          title: formData.title!,
+          description: formData.description || '',
+          status: formData.status!,
+          priority: formData.priority!,
+          dueDate: formData.dueDate && formData.dueDate !== '' ? new Date(formData.dueDate).toISOString() : null,
+          projectId: formData.projectId!,
+          assignees: formData.assignees || [],
+          subtasks: formData.subtasks || [],
+          tags: formData.tags || []
+        };
+
         console.log('📋 Creating task with data:', createData);
         console.log('📍 Task status:', createData.status);
 
@@ -264,10 +270,12 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
 
         // Only close modal after everything is done
         onClose();
-      } catch (error) {
-        console.error('Failed to create task:', error);
-        return; // Don't close modal if task creation failed
       }
+    } catch (error) {
+      console.error('Failed to save task:', error);
+      alert('Erro ao salvar tarefa. Tente novamente.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -640,8 +648,10 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
                <div></div>
              )}
              <div className="flex space-x-3">
-               <Button type="button" variant="secondary" onClick={onClose}>Cancelar</Button>
-               <Button type="submit">Salvar</Button>
+               <Button type="button" variant="secondary" onClick={onClose} disabled={isSaving}>Cancelar</Button>
+               <Button type="submit" disabled={isSaving}>
+                 {isSaving ? 'Salvando...' : 'Salvar'}
+               </Button>
              </div>
           </div>
         </form>
