@@ -15,7 +15,7 @@ interface TaskModalProps {
 }
 
 export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTask }) => {
-  const { addTask, updateTask, deleteTask, projects, users, columns, user, refreshData } = useApp();
+  const { addTask, updateTask, deleteTask, projects, users, columns, user } = useApp();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const socket = useSocket();
 
@@ -265,10 +265,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
           }
         }
 
-        // Refresh data to show the new task immediately
-        await refreshData();
-
-        // Only close modal after everything is done
+        // Close modal immediately - WebSocket will update the UI
         onClose();
       }
     } catch (error) {
