@@ -370,7 +370,16 @@ export const ITDemandsPage: React.FC = () => {
   };
 
   const getDemandsByStatus = (status: string) => {
-    return demands.filter(d => d.status === status);
+    return demands
+      .filter(d => d.status === status)
+      .sort((a, b) => {
+        // Sort by due date (ascending - closest deadline first)
+        // Demands without due date go to the end
+        if (!a.dueDate && !b.dueDate) return 0;
+        if (!a.dueDate) return 1;
+        if (!b.dueDate) return -1;
+        return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+      });
   };
 
   if (isLoading) {

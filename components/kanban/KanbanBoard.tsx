@@ -187,7 +187,16 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ projectId }) => {
       <div className="flex-1 overflow-x-auto pb-4">
         <div className="flex gap-6 min-w-max h-full">
           {columns.map(column => {
-            const columnTasks = filteredTasks.filter(t => t.status === column.id);
+            const columnTasks = filteredTasks
+              .filter(t => t.status === column.id)
+              .sort((a, b) => {
+                // Sort by due date (ascending - closest deadline first)
+                // Tasks without due date go to the end
+                if (!a.dueDate && !b.dueDate) return 0;
+                if (!a.dueDate) return 1;
+                if (!b.dueDate) return -1;
+                return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+              });
 
             return (
               <div
