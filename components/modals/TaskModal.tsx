@@ -47,6 +47,9 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, initialTa
   const canDeleteTask = user?.role === 'Admin' || user?.role === 'Gerente';
 
   useEffect(() => {
+    // Reset saving state when modal opens
+    setIsSaving(false);
+
     // Check if initialTask is a full task (has ID) or just a partial preset (from "Add Task" button with presets)
     if (initialTask?.id) {
       // EDIT MODE
