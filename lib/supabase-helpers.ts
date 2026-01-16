@@ -383,6 +383,7 @@ export const taskAPI = {
     if (updates.timeTracked !== undefined) updateData.time_tracked = updates.timeTracked;
     if (updates.isTracking !== undefined) updateData.is_tracking = updates.isTracking;
 
+    // Update task fields
     const { data, error } = await supabase
       .from('tasks')
       .update(updateData)
@@ -391,6 +392,30 @@ export const taskAPI = {
       .single();
 
     if (error) throw error;
+
+    // Update assignees if provided
+    if (updates.assignees !== undefined) {
+      // Delete existing assignees
+      const { error: deleteError } = await supabase
+        .from('task_assignees')
+        .delete()
+        .eq('task_id', id);
+
+      if (deleteError) throw deleteError;
+
+      // Insert new assignees
+      if (updates.assignees.length > 0) {
+        const { error: insertError } = await supabase
+          .from('task_assignees')
+          .insert(updates.assignees.map(userId => ({
+            task_id: id,
+            user_id: userId
+          })));
+
+        if (insertError) throw insertError;
+      }
+    }
+
     return data;
   },
 
